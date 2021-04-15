@@ -1,8 +1,6 @@
 #pragma once
 #include "control_final/model/state.h"
 
-#include "raytracer/data_structures/object_vector.h"
-#include "raytracer/light.h"
 #include "raytracer/renderer.h"
 #include <Magick++.h>
 
@@ -17,8 +15,7 @@ public:
          const Eigen::Vector3d camera, const Eigen::Vector3d camera_direction);
 
   void measure(const State &true_state, State &measured_state);
-  void render(const State &true_state, std::vector<char> &pixs,
-              const std::vector<raytracer::Light> &lights);
+  void render(const State &true_state, std::vector<char> &pixs);
 
 private:
   const unsigned _x_res;
