@@ -1,0 +1,6 @@
+[submodule "extern/raytracer"]
+	path = extern/raytracer
+	url = git@github.com:tottaway/raytracer.git
+[submodule "extern/moviemaker-cpp"]
+	path = extern/moviemaker-cpp
+	url = git@github.com:apc-llc/moviemaker-cpp.git
