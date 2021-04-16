@@ -4,7 +4,7 @@
 namespace control_final {
 
 struct Reference {
-    Pose table_pose;
+  Pose table_pose;
 };
 
-}
+} // namespace control_final

@@ -8,7 +8,8 @@ set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 
-set(SOURCES ./src/main.cpp ./src/sensor/sensor.cpp ./src/model/state.cpp)
+set(SOURCES ./src/main.cpp ./src/sensor/sensor.cpp ./src/model/state.cpp
+            ./src/model/environment.cpp)
 
 include_directories(./include ./extern/moviemaker-cpp/include)
 

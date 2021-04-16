@@ -13,16 +13,16 @@ static const raytracer::Color blue{1, 0.2, 0.2};
 static const raytracer::Color green{0.2, 1, 0.2};
 
 static const raytracer::Light light1 {
-  .I = 2, .type = raytracer::LightType::POINT_LIGHT, .color = red,
+  .I = 2, .type = raytracer::LightType::POINT_LIGHT, .color = white,
   .pose {
-    4, -1, 2
+    4, -1, 6
   }
 };
 
 static const raytracer::Light light2 {
-  .I = 2, .type = raytracer::LightType::POINT_LIGHT, .color = green,
-  .pose {
-    4, 1, 2
+  .I = 2, .type = raytracer::LightType::DIRECTIONAL_LIGHT, .color = white,
+  .dir {
+    1, 0, -0.5
   }
 };
 
