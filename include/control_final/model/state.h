@@ -5,7 +5,21 @@
 
 namespace control_final {
 
-struct Pose {
+struct BallPose {
+  double x;
+  double y;
+  double z;
+
+  double xdot;
+  double ydot;
+  double zdot;
+
+  // I only care about the angular velocity and what the axis of rotation is
+  Eigen::Vector3d axis_of_rotation;
+  double omega;
+};
+
+struct TablePose {
   double x;
   double y;
   double z;
@@ -16,17 +30,14 @@ struct Pose {
 
   double theta_x;
   double theta_y;
-  double theta_z;
 
   double theta_dot_x;
   double theta_dot_y;
-  double theta_dot_z;
 };
 
 struct State {
-  Pose ball_pose;
-  Pose table_pose;
-  Pose camera_pose;
+  BallPose ball_pose;
+  TablePose table_pose;
 
   raytracer::ObjectVector to_object_vector() const;
 };
