@@ -14,8 +14,7 @@ public:
   Sensor(const unsigned x_res, const unsigned y_res,
          const Eigen::Vector3d camera, const Eigen::Vector3d camera_direction);
 
-  void measure(const State &true_state, State &measured_state);
-  void render(const State &true_state, std::vector<char> &pixs);
+  void observe(const State &true_state, std::vector<char> &pixs);
 
 private:
   const unsigned _x_res;

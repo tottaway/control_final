@@ -13,20 +13,20 @@ static const raytracer::Color blue{1, 0.2, 0.2};
 static const raytracer::Color green{0.2, 1, 0.2};
 
 static const raytracer::Light light1 {
-  .I = 2, .type = raytracer::LightType::POINT_LIGHT, .color = white,
-  .pose {
-    4, -1, 6
+  .I = 1, .type = raytracer::LightType::DIRECTIONAL_LIGHT, .color = white,
+  .dir {
+    -1, -1, -4
   }
 };
 
 static const raytracer::Light light2 {
-  .I = 2, .type = raytracer::LightType::DIRECTIONAL_LIGHT, .color = white,
+  .I = 1, .type = raytracer::LightType::DIRECTIONAL_LIGHT, .color = white,
   .dir {
-    1, 0, -0.5
+    1, 0, -4
   }
 };
 
-static const std::vector<raytracer::Light> lights{light1, light2};
+static const std::vector<raytracer::Light> lights{light2};
 
 namespace control_final {
 
@@ -36,7 +36,7 @@ Sensor::Sensor(const unsigned x_res, const unsigned y_res,
     : _x_res(x_res), _y_res(y_res),
       _renderer(x_res, y_res, camera, camera_direction) {}
 
-void Sensor::render(const State &true_state, std::vector<char> &pixs) {
+void Sensor::observe(const State &true_state, std::vector<char> &pixs) {
 
   auto ov = true_state.to_object_vector();
 

@@ -9,26 +9,35 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 
 set(SOURCES ./src/main.cpp ./src/sensor/sensor.cpp ./src/model/state.cpp
-            ./src/model/environment.cpp)
+            ./src/model/environment.cpp ./src/controller/controller.cpp
+            ./src/controller/pid_controller.cpp)
 
 include_directories(./include ./extern/moviemaker-cpp/include)
 
 # target
-# set(TESTS ./test/src/test_shapes.cpp)
 add_executable(control_final ${SOURCES})
 
 
-# link raytracer
+# my implementation of a raytracer
 add_subdirectory(./extern/raytracer)
 target_link_libraries(control_final raytracer)
 
-# external libs
+# Eigen as a linear algebra library
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 target_link_libraries(control_final Eigen3::Eigen)
+
+# moviemaker-cpp for creating mp4s
 add_subdirectory(./extern/moviemaker-cpp)
 target_link_libraries(control_final moviemaker-cpp)
+
+# yaml-cpp for config files
 find_package(yaml-cpp REQUIRED)
 target_link_libraries(control_final yaml-cpp)
+
+# opencv for finding the ball in the image
+find_package( OpenCV REQUIRED )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+target_link_libraries( control_final ${OpenCV_LIBS} )
 
 # Taken from https://stackoverflow.com/questions/37759833/about-magick-how-to-write-the-cmakelists
 add_definitions( -DMAGICKCORE_QUANTUM_DEPTH=16 )

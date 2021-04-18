@@ -1,5 +1,6 @@
 #include "control_final/sensor/sensor.h"
 #include "control_final/model/environment.h"
+#include "control_final/controller/pid_controller.h"
 
 #include "movie.h"
 #include <Eigen/Dense>
@@ -8,8 +9,8 @@
 using namespace control_final;
 int main(int argc, char *argv[]) {
 
-  /* const Eigen::Vector3d camera{-3, 0, 0.1}; */
-  /* const Eigen::Vector3d d{1, 0, -0.03}; */
+  /* const Eigen::Vector3d camera{-2, 0, 0.3}; */
+  /* const Eigen::Vector3d d{1, 0, -0.1}; */
   const Eigen::Vector3d camera{0, 0, 3};
   const Eigen::Vector3d d{0, 0, -1};
   const unsigned xres = 720;
@@ -24,8 +25,8 @@ int main(int argc, char *argv[]) {
   TablePose reference{0, 0, -0.04, 0, 0, 0, 0, 0, 0, 0};
   Reference u{.table_pose = reference};
 
-  Eigen::Vector3d init_aor{0, 0, 1};
-  BallPose init_pos{0, 0, 0, 0.04, 0, 0, init_aor, 10};
+  Eigen::Vector3d init_aor{0, 1, 0};
+  BallPose init_pos{0, 0, 0, 0.04, 0, 0, init_aor, 0.};
   env.set_ball_pose(init_pos);
 
   std::vector<char> pixs(xres * yres * 3);
@@ -38,19 +39,18 @@ int main(int argc, char *argv[]) {
 
   // Super jank hack since the library I'm using to make the videos messes us
   // the first second of video
-  sensor.render(env.get_state(), pixs);
+  sensor.observe(env.get_state(), pixs);
   for (unsigned i = 0; i < 25; i++) {
     writer.addFrame((const uint8_t *)&pixs[0]);
   }
 
+  PIDController controller;
   for (unsigned i = 0; i < nframes; i++) {
     /* u.table_pose.theta_x = sin(i / 200.) / 50.; */
     /* u.table_pose.theta_y = cos(i / 200.) / 50.; */
     env.step(u);
 
-    if (i % (fps / 25) == 0) {
-      sensor.render(env.get_state(), pixs);
-      writer.addFrame((const uint8_t *)&pixs[0]);
-    }
+    sensor.observe(env.get_state(), pixs);
+    controller.react(pixs, u);
   }
 }
