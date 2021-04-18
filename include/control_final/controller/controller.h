@@ -6,7 +6,7 @@ namespace control_final {
 
 class Controller {
 public:
-  Controller() {};
+  Controller(const std::string &filename) {};
   virtual void react(std::vector<char> &pixs, Reference &u) = 0;
 
 protected:

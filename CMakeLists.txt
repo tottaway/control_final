@@ -10,7 +10,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 
 set(SOURCES ./src/main.cpp ./src/sensor/sensor.cpp ./src/model/state.cpp
             ./src/model/environment.cpp ./src/controller/controller.cpp
-            ./src/controller/pid_controller.cpp)
+            ./src/controller/pid_controller.cpp ./src/model/render_config.cpp
+            ./src/simulator.cpp)
 
 include_directories(./include ./extern/moviemaker-cpp/include)
 

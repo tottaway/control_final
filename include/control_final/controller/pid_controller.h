@@ -6,7 +6,7 @@ namespace control_final {
 
 class PIDController : public Controller {
 public:
-  PIDController() {};
+  PIDController(const std::string &filename);
   void react(std::vector<char> &pixs, Reference &u);
 };
 } // namespace control_final

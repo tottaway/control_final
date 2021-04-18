@@ -4,20 +4,20 @@
 
 #include "raytracer/data_structures/object_vector.h"
 
+#include <string>
+
 namespace control_final {
 
 class Environment {
 public:
   // Constants for the scene objects
-  // TODO: read these from config file
-  constexpr static double BALL_RADIUS = 0.04;
-  constexpr static double BALL_MASS = 0.027;
-  constexpr static double TABLE_RADIUS = 0.4;
-  constexpr static double TABLE_HEIGHT = 0.01;
-  constexpr static double DT = 1. / 1000;
-  constexpr static double I = (2. / 3.) * BALL_MASS * BALL_RADIUS * BALL_RADIUS;
-
-  constexpr static bool ROTATION_VIZ = false;
+  // these are read from config/env_config.yaml
+  double BALL_RADIUS;
+  double BALL_MASS;
+  double TABLE_RADIUS;
+  double TABLE_HEIGHT;
+  double DT;
+  double MU;
 
   // Constructor initializes state to all zeros
   Environment() {
@@ -27,27 +27,33 @@ public:
     _state = {ball_pose, table_pose};
   };
 
+  Environment(const std::string &filename);
+
   // advances scene by dt
   void step(const Reference &u);
 
   // Lots of getters
   State get_state() const { return _state; };
+
   Eigen::Vector3d get_table_pos() const {
     Eigen::Vector3d res;
     res << _state.table_pose.x, _state.table_pose.y, _state.table_pose.z;
     return res;
   };
+
   Eigen::Vector3d get_table_vel() const {
     Eigen::Vector3d res;
     res << _state.table_pose.xdot, _state.table_pose.ydot,
         _state.table_pose.zdot;
     return res;
   };
+
   Eigen::Vector3d get_ball_pos() const {
     Eigen::Vector3d res;
     res << _state.ball_pose.x, _state.ball_pose.y, _state.ball_pose.z;
     return res;
   };
+
   Eigen::Vector3d get_ball_vel() const {
     Eigen::Vector3d res;
     res << _state.ball_pose.xdot, _state.ball_pose.ydot, _state.ball_pose.zdot;
@@ -55,14 +61,21 @@ public:
   };
 
   // aor == axis_of_rotation
-  Eigen::Vector3d get_ball_aor() const { return _state.ball_pose.axis_of_rotation; }
+  Eigen::Vector3d get_ball_aor() const {
+    return _state.ball_pose.axis_of_rotation;
+  }
 
   double get_ball_omega() const { return _state.ball_pose.omega; }
 
   // Assumes that the ball is a shell
-  double get_angular_momentum() const { return I * _state.ball_pose.omega; }
+  double get_angular_momentum() const {
+    return get_I() * _state.ball_pose.omega;
+  }
 
   Eigen::Vector3d get_table_normal_vec() const;
+  double get_I() const {
+    return (2. / 3.) * BALL_MASS * BALL_RADIUS * BALL_RADIUS;
+  }
 
   // Lots of setters
   void set_table_pose(const TablePose new_pose) {

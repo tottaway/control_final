@@ -1,10 +1,7 @@
 #include "control_final/model/environment.h"
+#include "control_final/model/render_config.h"
 
 #include "raytracer/data_structures/object_vector.h"
-#include "raytracer/light.h"
-#include "raytracer/material.h"
-#include "raytracer/shapes.h"
-#include "raytracer/util.h"
 
 #include "yaml.h"
 #include <Eigen/Dense>
@@ -13,9 +10,46 @@
 #include <memory>
 #include <vector>
 
-namespace control_final {} // namespace control_final
-
 namespace control_final {
+
+Environment::Environment(const std::string &filename) {
+  auto file = YAML::LoadFile(filename);
+
+  // error checking
+  if (!file["ball_mass"]) {
+    std::cout << "Did not specify ball_mass in " << filename << std::endl;
+    exit(1);
+  } else if (!file["ball_radius"]) {
+    std::cout << "Did not specify ball_radius in " << filename << std::endl;
+    exit(1);
+  } else if (!file["table_height"]) {
+    std::cout << "Did not specify table_height in " << filename << std::endl;
+    exit(1);
+  } else if (!file["table_radius"]) {
+    std::cout << "Did not specify table_radius in " << filename << std::endl;
+    exit(1);
+  } else if (!file["dt"]) {
+    std::cout << "Did not specify dt in " << filename << std::endl;
+    exit(1);
+  } else if (!file["mu"]) {
+    std::cout << "Did not specify mu in " << filename << std::endl;
+    exit(1);
+  }
+
+  BALL_MASS = file["ball_mass"].as<double>();
+  BALL_RADIUS = file["ball_radius"].as<double>();
+  TABLE_HEIGHT = file["table_height"].as<double>();
+  TABLE_RADIUS = file["table_radius"].as<double>();
+  DT = file["dt"].as<double>();
+  MU = file["mu"].as<double>();
+
+  // set state to be all zeros (expect axis of rotation which wouldn't make
+  // sense)
+  const Eigen::Vector3d init_aor{0, 1, 0};
+  BallPose ball_pose{0, 0, 0, 0, 0, 0, init_aor, 0};
+  TablePose table_pose{0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  _state = {ball_pose, table_pose};
+}
 
 void Environment::step(const Reference &u) {
   set_table_pose(u.table_pose);
@@ -51,8 +85,6 @@ void Environment::step(const Reference &u) {
     // handle friction
     // Calculate force that we just exerted (this is the normal force)
     const Eigen::Vector3d normal_force = delta_v * BALL_MASS / DT;
-    // TODO: mu should be in config
-    constexpr double mu = 0.6;
 
     // friction direction is the opposite of the ball's velocity projected onto
     // the table (note that this velocity is at the tangent point not the COM)
@@ -65,7 +97,7 @@ void Environment::step(const Reference &u) {
         (neg_curr_vel - neg_curr_vel.dot(normal_vec) * normal_vec).normalized();
 
     const Eigen::Vector3d friction_force =
-        friction_dir * normal_force.norm() * mu;
+        friction_dir * normal_force.norm() * MU;
 
     // calulate frictions affect of COM
     _apply_force(friction_force);
@@ -88,14 +120,20 @@ void Environment::_apply_torque(const Eigen::Vector3d &force,
   const Eigen::Vector3d torque = (-normal * BALL_RADIUS).cross(force);
   const Eigen::Vector3d aor = get_ball_aor();
 
-  set_ball_omega(get_ball_omega() + DT * torque.dot(aor) / I);
+  set_ball_omega(get_ball_omega() + DT * torque.dot(aor) / get_I());
 
   // Next we calculate procession effects
   const Eigen::Vector3d torque_along_aor = torque.dot(aor) * aor;
   const Eigen::Vector3d torque_perp_to_aor = torque - torque_along_aor;
-  Eigen::Vector3d d_aor =
-      (1 / get_angular_momentum()) * torque_perp_to_aor * DT;
-  set_ball_aor(aor + d_aor);
+  const double L = get_angular_momentum();
+
+  // This check is to avoid divide by zero errors when we aren't spinning
+  // Besided if there is no angular momentum, there is no procession
+  if (L) {
+    Eigen::Vector3d d_aor =
+        (1 / L) * torque_perp_to_aor * DT;
+    set_ball_aor(aor + d_aor);
+  }
 }
 
 void Environment::_move_ball() {
@@ -119,33 +157,6 @@ Eigen::Vector3d Environment::get_table_normal_vec() const {
   return normal_vector;
 }
 
-// Colors are BGR
-// TODO: move to config
-static const raytracer::Color ball_color{0, 165. / 255, 1};
-static const raytracer::Color table_color{0.4, 0.4, 0.8};
-static const raytracer::Color red{0, 0, 1};
-static const raytracer::Color white{1, 1, 1};
-
-static const raytracer::Material ball_material{.kd = 0.70,
-                                               .ks = 0.10,
-                                               .specular_exponent = 4,
-                                               .diffuse_color = ball_color,
-                                               .specular_color = white};
-
-static const raytracer::Material table_material{.kd = 0.75,
-                                                    .ks = 0.05,
-                                                    .specular_exponent = 4,
-                                                    .diffuse_color =
-                                                        table_color,
-                                                    .specular_color = white};
-
-static const raytracer::Material rotation_viz_material{
-    .kd = 0.75,
-    .ks = 0.05,
-    .specular_exponent = 4,
-    .diffuse_color = red,
-    .specular_color = white};
-
 // and have sensor take in env and not state
 raytracer::ObjectVector Environment::to_object_vector() const {
   std::vector<std::unique_ptr<raytracer::SceneObject>> objects;
@@ -168,10 +179,10 @@ raytracer::ObjectVector Environment::to_object_vector() const {
   // TODO: for some reason make_unique wasn't working so I'm doing this for
   // now
   objects.push_back(std::unique_ptr<raytracer::Sphere>(
-      new raytracer::Sphere{ball_node, ball_material}));
+      new raytracer::Sphere{ball_node, RenderingConfigs::ball_material}));
 
   // Extra cylinder to visualize rotation
-  if (ROTATION_VIZ) {
+  if (RenderingConfigs::show_rotation_viz) {
     YAML::Node rotation_viz;
     rotation_viz["primative"] = "cylinder";
     rotation_viz["transforms"][0]["type"] = "scale";
@@ -191,8 +202,9 @@ raytracer::ObjectVector Environment::to_object_vector() const {
     rotation_viz["p2"][2] = aor[2];
     rotation_viz["r"] = 0.25;
 
-    objects.push_back(std::unique_ptr<raytracer::Cylinder>(
-        new raytracer::Cylinder{rotation_viz, rotation_viz_material}));
+    objects.push_back(
+        std::unique_ptr<raytracer::Cylinder>(new raytracer::Cylinder{
+            rotation_viz, RenderingConfigs::rotation_viz_material}));
   }
 
   // Next make the table
@@ -215,7 +227,7 @@ raytracer::ObjectVector Environment::to_object_vector() const {
   table_node["r"] = TABLE_RADIUS;
 
   objects.push_back(std::unique_ptr<raytracer::Cylinder>(
-      new raytracer::Cylinder{table_node, table_material}));
+      new raytracer::Cylinder{table_node, RenderingConfigs::table_material}));
 
   return raytracer::ObjectVector(std::move(objects));
 };
