@@ -1,7 +1,7 @@
 #pragma once
-#include "raytracer/data_structures/object_vector.h"
 
 #include <array>
+#include <Eigen/Dense>
 
 namespace control_final {
 
@@ -38,8 +38,6 @@ struct TablePose {
 struct State {
   BallPose ball_pose;
   TablePose table_pose;
-
-  raytracer::ObjectVector to_object_vector() const;
 };
 
 } // namespace control_final

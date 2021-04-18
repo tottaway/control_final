@@ -1,4 +1,6 @@
 #include "control_final/sensor/sensor.h"
+#include "control_final/model/environment.h"
+
 #include "raytracer/data_structures/object_vector.h"
 #include "raytracer/util.h"
 #include "raytracer/light.h"
@@ -36,9 +38,9 @@ Sensor::Sensor(const unsigned x_res, const unsigned y_res,
     : _x_res(x_res), _y_res(y_res),
       _renderer(x_res, y_res, camera, camera_direction) {}
 
-void Sensor::observe(const State &true_state, std::vector<char> &pixs) {
+void Sensor::observe(const Environment &env, std::vector<char> &pixs) {
 
-  auto ov = true_state.to_object_vector();
+  auto ov = env.to_object_vector();
 
   // filename is empty since we don't want to write to disk
   std::string filename = "";

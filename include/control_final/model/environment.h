@@ -2,6 +2,8 @@
 #include "control_final/controller/reference.h"
 #include "control_final/model/state.h"
 
+#include "raytracer/data_structures/object_vector.h"
+
 namespace control_final {
 
 class Environment {
@@ -15,6 +17,8 @@ public:
   constexpr static double DT = 1. / 1000;
   constexpr static double I = (2. / 3.) * BALL_MASS * BALL_RADIUS * BALL_RADIUS;
 
+  constexpr static bool ROTATION_VIZ = false;
+
   // Constructor initializes state to all zeros
   Environment() {
     const Eigen::Vector3d init_aor{0, 1, 0};
@@ -27,38 +31,38 @@ public:
   void step(const Reference &u);
 
   // Lots of getters
-  State get_state() { return _state; };
-  Eigen::Vector3d get_table_pos() {
+  State get_state() const { return _state; };
+  Eigen::Vector3d get_table_pos() const {
     Eigen::Vector3d res;
     res << _state.table_pose.x, _state.table_pose.y, _state.table_pose.z;
     return res;
   };
-  Eigen::Vector3d get_table_vel() {
+  Eigen::Vector3d get_table_vel() const {
     Eigen::Vector3d res;
     res << _state.table_pose.xdot, _state.table_pose.ydot,
         _state.table_pose.zdot;
     return res;
   };
-  Eigen::Vector3d get_ball_pos() {
+  Eigen::Vector3d get_ball_pos() const {
     Eigen::Vector3d res;
     res << _state.ball_pose.x, _state.ball_pose.y, _state.ball_pose.z;
     return res;
   };
-  Eigen::Vector3d get_ball_vel() {
+  Eigen::Vector3d get_ball_vel() const {
     Eigen::Vector3d res;
     res << _state.ball_pose.xdot, _state.ball_pose.ydot, _state.ball_pose.zdot;
     return res;
   };
 
   // aor == axis_of_rotation
-  Eigen::Vector3d get_ball_aor() { return _state.ball_pose.axis_of_rotation; }
+  Eigen::Vector3d get_ball_aor() const { return _state.ball_pose.axis_of_rotation; }
 
-  double get_ball_omega() {return _state.ball_pose.omega;}
+  double get_ball_omega() const { return _state.ball_pose.omega; }
 
   // Assumes that the ball is a shell
-  double get_angular_momentum() { return I * _state.ball_pose.omega; }
+  double get_angular_momentum() const { return I * _state.ball_pose.omega; }
 
-  Eigen::Vector3d get_table_normal_vec();
+  Eigen::Vector3d get_table_normal_vec() const;
 
   // Lots of setters
   void set_table_pose(const TablePose new_pose) {
@@ -98,6 +102,8 @@ public:
   void set_ball_omega(const double new_omega) {
     _state.ball_pose.omega = new_omega;
   };
+
+  raytracer::ObjectVector to_object_vector() const;
 
 private:
   State _state;
