@@ -16,10 +16,10 @@ namespace control_final {
 Sensor::Sensor(const unsigned xres, const unsigned yres,
                const Eigen::Vector3d camera_pos,
                const Eigen::Vector3d camera_dir)
-    : _xres(xres), _yres(yres), _camera_pos(camera_pos),
-      _camera_dir(camera_dir) {
-  _renderer = std::make_unique<raytracer::Renderer>(_xres, _yres, _camera_pos,
-                                                    _camera_dir);
+    : m_xres(xres), m_yres(yres), m_camera_pos(camera_pos),
+      m_camera_dir(camera_dir) {
+  m_renderer = std::make_unique<raytracer::Renderer>(
+      m_xres, m_yres, m_camera_pos, m_camera_dir);
 }
 
 Sensor::Sensor(const std::string &filename) {
@@ -40,15 +40,15 @@ Sensor::Sensor(const std::string &filename) {
     exit(1);
   }
 
-  _xres = file["xres"].as<unsigned>();
-  _yres = file["yres"].as<unsigned>();
-  _camera_pos << file["camera_pos"][0].as<double>(),
+  m_xres = file["xres"].as<unsigned>();
+  m_yres = file["yres"].as<unsigned>();
+  m_camera_pos << file["camera_pos"][0].as<double>(),
       file["camera_pos"][1].as<double>(), file["camera_pos"][2].as<double>();
-  _camera_dir << file["camera_dir"][0].as<double>(),
+  m_camera_dir << file["camera_dir"][0].as<double>(),
       file["camera_dir"][1].as<double>(), file["camera_dir"][2].as<double>();
 
-  _renderer = std::make_unique<raytracer::Renderer>(_xres, _yres, _camera_pos,
-                                                    _camera_dir);
+  m_renderer = std::make_unique<raytracer::Renderer>(
+      m_xres, m_yres, m_camera_pos, m_camera_dir);
 }
 
 void Sensor::observe(const Environment &env, std::vector<char> &pixs) {
@@ -56,7 +56,7 @@ void Sensor::observe(const Environment &env, std::vector<char> &pixs) {
 
   // filename is empty since we don't want to write to disk
   std::string filename = "";
-  _renderer->render(filename, pixs, ov, RenderingConfigs::lights);
+  m_renderer->render(filename, pixs, ov, RenderingConfigs::lights);
 }
 
 } // namespace control_final

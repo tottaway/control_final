@@ -16,28 +16,28 @@ public:
   Simulator(const std::string &config_dir);
   void run();
 
-  State get_state() { return _env.get_state(); };
+  State get_state() { return m_env.get_state(); };
 
 private:
-  Sensor _sensor;
-  Environment _env;
-  std::unique_ptr<Controller> _controller;
+  Sensor m_sensor;
+  Environment m_env;
+  std::unique_ptr<Controller> m_controller;
 
   // Total time to run the simulation
-  double _T;
-  unsigned _fps;
+  double m_T;
+  unsigned m_fps;
 
   // This is the camera which the observer is watching through
-  bool _make_observer_video;
+  bool m_make_observer_video;
   // This are pointers so that they can be null if the flag above is false
-  std::unique_ptr<Sensor> _observer;
-  std::unique_ptr<MovieWriter> _observer_writer;
+  std::unique_ptr<Sensor> m_observer;
+  std::unique_ptr<MovieWriter> m_observer_writer;
 
   // This is the camera which the observer is watching through
-  bool _make_sensor_video;
-  std::unique_ptr<MovieWriter> _sensor_writer;
+  bool m_make_sensor_video;
+  std::unique_ptr<MovieWriter> m_sensor_writer;
 
-  void _parse_sim_configs(const std::string &sim_file_name);
+  void parse_sim_configs(const std::string &sim_file_name);
 };
 
 } // namespace control_final

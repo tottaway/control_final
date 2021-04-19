@@ -13,7 +13,7 @@ public:
                      const Sensor &sensor) = 0;
 
 protected:
-  State _predict_state(std::vector<char> &pixs, const Sensor &sensor);
+  State predict_state(std::vector<char> &pixs, const Sensor &sensor);
 };
 
 } // namespace control_final

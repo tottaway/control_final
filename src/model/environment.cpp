@@ -36,55 +36,49 @@ Environment::Environment(const std::string &filename) {
     exit(1);
   }
 
-  BALL_MASS = file["ball_mass"].as<double>();
-  BALL_RADIUS = file["ball_radius"].as<double>();
-  TABLE_HEIGHT = file["table_height"].as<double>();
-  TABLE_RADIUS = file["table_radius"].as<double>();
-  DT = file["dt"].as<double>();
-  MU = file["mu"].as<double>();
+  ball_mass = file["ball_mass"].as<double>();
+  ball_radius = file["ball_radius"].as<double>();
+  table_height = file["table_height"].as<double>();
+  table_radius = file["table_radius"].as<double>();
+  dt = file["dt"].as<double>();
+  mu = file["mu"].as<double>();
 
   // set state to be all zeros (expect axis of rotation which wouldn't make
   // sense)
   const Eigen::Vector3d init_aor{0, 1, 0};
   BallPose ball_pose{0, 0, 0, 0, 0, 0, init_aor, 0};
   TablePose table_pose{0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  _state = {ball_pose, table_pose};
+  m_state = {ball_pose, table_pose};
 }
 
 void Environment::step(const Reference &u) {
-  set_table_pose(u.table_pose);
+  m_state.table_pose.theta_dot_x = u.table_pose.theta_dot_x;
+  m_state.table_pose.theta_dot_y = u.table_pose.theta_dot_y;
 
-  // find all of the forces acting on the ball
-  Eigen::Vector3d gravity;
-  gravity << 0, 0, -9.8;
-  gravity *= BALL_MASS;
-
-  _apply_force(gravity);
-  _move_ball();
-
-  // assest that ball is in contact with the table
+  // check if ball is in contact with the table and apply corrective force
   const Eigen::Vector3d normal_vec = get_table_normal_vec();
   const Eigen::Vector3d table_to_ball = get_ball_pos() - get_table_pos();
   const double dist_from_table = (table_to_ball).dot(normal_vec);
   const double dist_from_center =
       (table_to_ball - dist_from_table * normal_vec).norm();
 
-  if (dist_from_table < BALL_RADIUS && dist_from_center < TABLE_RADIUS) {
+  if (dist_from_table < ball_radius && dist_from_center < table_radius) {
     // Resolve colision
-    const double intersection_depth = dist_from_table - BALL_RADIUS;
-    Eigen::Vector3d delta_v = -intersection_depth * normal_vec / DT;
+    const double intersection_depth = dist_from_table - ball_radius;
+    Eigen::Vector3d delta_v = -intersection_depth * normal_vec / dt;
 
     // this is an approximation for losing energy during a bounce
     // TODO: energy lost should be in config
-    double extra_v = (get_ball_vel() - delta_v).dot(normal_vec);
-    if (extra_v > 0)
+    double extra_v = (get_ball_vel() + delta_v).dot(normal_vec);
+    if (extra_v > 0) {
       delta_v -= 0.8 * extra_v * delta_v;
-
-    set_ball_vel(get_ball_vel() + delta_v);
+    }
 
     // handle friction
     // Calculate force that we just exerted (this is the normal force)
-    const Eigen::Vector3d normal_force = delta_v * BALL_MASS / DT;
+    const Eigen::Vector3d normal_force = delta_v * ball_mass / dt;
+
+    apply_force(normal_force);
 
     // friction direction is the opposite of the ball's velocity projected onto
     // the table (note that this velocity is at the tangent point not the COM)
@@ -96,64 +90,96 @@ void Environment::step(const Reference &u) {
     const Eigen::Vector3d friction_dir =
         (neg_curr_vel - neg_curr_vel.dot(normal_vec) * normal_vec).normalized();
 
-    const Eigen::Vector3d friction_force =
-        friction_dir * normal_force.norm() * MU;
+    Eigen::Vector3d friction_force =
+        friction_dir * normal_force.norm() * mu;
+
+    const double curr_speed_on_table =
+        (-(neg_curr_vel - neg_curr_vel.dot(normal_vec) * normal_vec)).norm();
+
+    // Force shouldn't be stronger than enough to stop the ball
+    const double dv = (friction_force * dt / ball_mass).norm();
+    if (dv > curr_speed_on_table) {
+      friction_force *= curr_speed_on_table / dv;
+    }
 
     // calulate frictions affect of COM
-    _apply_force(friction_force);
+    apply_force(friction_force);
 
-    _apply_torque(friction_force, normal_vec);
+    apply_torque(friction_force, normal_vec);
   }
+
+  // find all of the forces acting on the ball
+  Eigen::Vector3d gravity;
+  gravity << 0, 0, -9.8;
+  gravity *= ball_mass;
+
+  apply_force(gravity);
+  move_ball();
+  move_table();
+
 }
 
-void Environment::_apply_force(const Eigen::Vector3d &force) {
-  _state.ball_pose.xdot += DT * force[0] / BALL_MASS;
-  _state.ball_pose.ydot += DT * force[1] / BALL_MASS;
-  _state.ball_pose.zdot += DT * force[2] / BALL_MASS;
+void Environment::apply_force(const Eigen::Vector3d &force) {
+  m_state.ball_pose.xdot += dt * force[0] / ball_mass;
+  m_state.ball_pose.ydot += dt * force[1] / ball_mass;
+  m_state.ball_pose.zdot += dt * force[2] / ball_mass;
 }
 
-void Environment::_apply_torque(const Eigen::Vector3d &force,
+void Environment::apply_torque(const Eigen::Vector3d &force,
                                 const Eigen::Vector3d &normal) {
 
   // First we calculate affect on omega
   // First we need torque vector
-  const Eigen::Vector3d torque = (-normal * BALL_RADIUS).cross(force);
+  const Eigen::Vector3d torque = (-normal * ball_radius).cross(force);
   const Eigen::Vector3d aor = get_ball_aor();
 
-  set_ball_omega(get_ball_omega() + DT * torque.dot(aor) / get_I());
+  const double omega = get_ball_omega();
+  if (omega > 0) {
+    set_ball_omega(get_ball_omega() + dt * torque.dot(aor) / get_I());
+  } else {
+    set_ball_omega(get_ball_omega() + dt * torque.norm() / get_I());
+    set_ball_aor(torque.normalized());
+  }
 
   // Next we calculate procession effects
   const Eigen::Vector3d torque_along_aor = torque.dot(aor) * aor;
   const Eigen::Vector3d torque_perp_to_aor = torque - torque_along_aor;
-  const double L = get_angular_momentum();
 
+  const double L = get_angular_momentum();
   // This check is to avoid divide by zero errors when we aren't spinning
   // Besided if there is no angular momentum, there is no procession
   if (L) {
-    Eigen::Vector3d d_aor =
-        (1 / L) * torque_perp_to_aor * DT;
+    Eigen::Vector3d d_aor = (1 / L) * torque_perp_to_aor * dt;
     set_ball_aor(aor + d_aor);
   }
 }
 
-void Environment::_move_ball() {
-  _state.ball_pose.x += DT * _state.ball_pose.xdot;
-  _state.ball_pose.y += DT * _state.ball_pose.ydot;
-  _state.ball_pose.z += DT * _state.ball_pose.zdot;
+void Environment::move_ball() {
+  m_state.ball_pose.x += dt * m_state.ball_pose.xdot;
+  m_state.ball_pose.y += dt * m_state.ball_pose.ydot;
+  m_state.ball_pose.z += dt * m_state.ball_pose.zdot;
+}
+void Environment::move_table() {
+  m_state.table_pose.x += dt * m_state.table_pose.xdot;
+  m_state.table_pose.y += dt * m_state.table_pose.ydot;
+  m_state.table_pose.z += dt * m_state.table_pose.zdot;
+
+  m_state.table_pose.theta_x += dt * m_state.table_pose.theta_dot_x;
+  m_state.table_pose.theta_y += dt * m_state.table_pose.theta_dot_y;
 }
 
-void Environment::_apply_vel(const Eigen::Vector3d &vel) {
-  _state.ball_pose.x += DT * vel[0];
-  _state.ball_pose.y += DT * vel[1];
-  _state.ball_pose.z += DT * vel[2];
+void Environment::apply_vel(const Eigen::Vector3d &vel) {
+  m_state.ball_pose.x += dt * vel[0];
+  m_state.ball_pose.y += dt * vel[1];
+  m_state.ball_pose.z += dt * vel[2];
 }
 
 Eigen::Vector3d Environment::get_table_normal_vec() const {
   Eigen::Vector3d normal_vector;
-  normal_vector[0] = sin(_state.table_pose.theta_y);
-  normal_vector[1] = sin(_state.table_pose.theta_x);
-  normal_vector[2] = sqrt(1 - (pow(sin(_state.table_pose.theta_x), 2) +
-                               pow(sin(_state.table_pose.theta_y), 2)));
+  normal_vector[0] = sin(m_state.table_pose.theta_y);
+  normal_vector[1] = sin(m_state.table_pose.theta_x);
+  normal_vector[2] = sqrt(1 - (pow(sin(m_state.table_pose.theta_x), 2) +
+                               pow(sin(m_state.table_pose.theta_y), 2)));
   return normal_vector;
 }
 
@@ -167,14 +193,14 @@ raytracer::ObjectVector Environment::to_object_vector() const {
   const Eigen::Vector3d ball_pos = get_ball_pos();
   ball_node["primative"] = "sphere";
   ball_node["transforms"][0]["type"] = "scale";
-  ball_node["transforms"][0]["scale_factor"] = BALL_RADIUS;
+  ball_node["transforms"][0]["scale_factor"] = ball_radius;
 
   // Note that since we've scaled everything we need to also scale the
   // translations
   ball_node["transforms"][1]["type"] = "translate";
-  ball_node["transforms"][1]["dx"] = ball_pos[0] / BALL_RADIUS;
-  ball_node["transforms"][1]["dy"] = ball_pos[1] / BALL_RADIUS;
-  ball_node["transforms"][1]["dz"] = ball_pos[2] / BALL_RADIUS;
+  ball_node["transforms"][1]["dx"] = ball_pos[0] / ball_radius;
+  ball_node["transforms"][1]["dy"] = ball_pos[1] / ball_radius;
+  ball_node["transforms"][1]["dz"] = ball_pos[2] / ball_radius;
 
   // TODO: for some reason make_unique wasn't working so I'm doing this for
   // now
@@ -186,14 +212,14 @@ raytracer::ObjectVector Environment::to_object_vector() const {
     YAML::Node rotation_viz;
     rotation_viz["primative"] = "cylinder";
     rotation_viz["transforms"][0]["type"] = "scale";
-    rotation_viz["transforms"][0]["scale_factor"] = BALL_RADIUS;
+    rotation_viz["transforms"][0]["scale_factor"] = ball_radius;
 
     rotation_viz["transforms"][1]["type"] = "translate";
-    rotation_viz["transforms"][1]["dx"] = ball_pos[0] / BALL_RADIUS;
-    rotation_viz["transforms"][1]["dy"] = ball_pos[1] / BALL_RADIUS;
-    rotation_viz["transforms"][1]["dz"] = ball_pos[2] / BALL_RADIUS;
+    rotation_viz["transforms"][1]["dx"] = ball_pos[0] / ball_radius;
+    rotation_viz["transforms"][1]["dy"] = ball_pos[1] / ball_radius;
+    rotation_viz["transforms"][1]["dz"] = ball_pos[2] / ball_radius;
 
-    Eigen::Vector3d aor = _state.ball_pose.axis_of_rotation * 2.4;
+    Eigen::Vector3d aor = m_state.ball_pose.axis_of_rotation * 2.4;
     rotation_viz["p1"][0] = 0.;
     rotation_viz["p1"][1] = 0.;
     rotation_viz["p1"][2] = 0.;
@@ -216,7 +242,7 @@ raytracer::ObjectVector Environment::to_object_vector() const {
   table_node["transforms"][0]["dy"] = table_pos[1];
   table_node["transforms"][0]["dz"] = table_pos[2];
 
-  const Eigen::Vector3d normal = get_table_normal_vec() * TABLE_HEIGHT;
+  const Eigen::Vector3d normal = get_table_normal_vec() * table_height;
   // TODO: switch pivoting on the bottom
   table_node["p1"][0] = -normal[0];
   table_node["p1"][1] = -normal[1];
@@ -224,7 +250,7 @@ raytracer::ObjectVector Environment::to_object_vector() const {
   table_node["p2"][0] = 0.;
   table_node["p2"][1] = 0.;
   table_node["p2"][2] = 0.;
-  table_node["r"] = TABLE_RADIUS;
+  table_node["r"] = table_radius;
 
   objects.push_back(std::unique_ptr<raytracer::Cylinder>(
       new raytracer::Cylinder{table_node, RenderingConfigs::table_material}));

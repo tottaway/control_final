@@ -12,7 +12,7 @@
 namespace control_final {
 
 using namespace cv;
-State Controller::_predict_state(std::vector<char> &pixs,
+State Controller::predict_state(std::vector<char> &pixs,
                                  const Sensor &sensor) {
   const unsigned xres = sensor.get_xres();
   const unsigned yres = sensor.get_yres();
@@ -55,7 +55,10 @@ State Controller::_predict_state(std::vector<char> &pixs,
   // TODO: handle these cases more cleanly
   if (ncircles == 0) {
     std::cout << "Need to handle case where ball isn't detected" << std::endl;
-    exit(1);
+    State ret;
+    ret.ball_pose.x = 0;
+    ret.ball_pose.y = 0;
+    return ret;
   }
   if (ncircles > 1) {
     std::cout << "Need to handle case where more that one circle is detected"

@@ -21,19 +21,19 @@ public:
 
   void observe(const Environment &env, std::vector<char> &pixs);
 
-  size_t get_xres() const { return _xres; }
-  size_t get_yres() const { return _yres; }
-  Eigen::Vector3d get_camera_pos() const { return _camera_pos; }
-  Eigen::Vector3d get_camera_dir() const { return _camera_dir; }
-  size_t get_pixs_size() const { return _xres * _yres * 3; }
+  size_t get_xres() const { return m_xres; }
+  size_t get_yres() const { return m_yres; }
+  Eigen::Vector3d get_camera_pos() const { return m_camera_pos; }
+  Eigen::Vector3d get_camera_dir() const { return m_camera_dir; }
+  size_t get_pixs_size() const { return m_xres * m_yres * 3; }
 
 private:
-  unsigned _xres;
-  unsigned _yres;
-  Eigen::Vector3d _camera_pos;
-  Eigen::Vector3d _camera_dir;
+  unsigned m_xres;
+  unsigned m_yres;
+  Eigen::Vector3d m_camera_pos;
+  Eigen::Vector3d m_camera_dir;
 
-  std::unique_ptr<raytracer::Renderer> _renderer;
+  std::unique_ptr<raytracer::Renderer> m_renderer;
   void process();
 };
 
