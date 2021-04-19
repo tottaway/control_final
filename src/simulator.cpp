@@ -206,11 +206,11 @@ void Simulator::run() {
   const unsigned step_per_sec = 1. / m_env.dt;
   Reference u;
   m_sensor.observe(m_env, sensor_pixs);
-  m_controller->react(sensor_pixs, u, m_sensor);
+  m_controller->react(sensor_pixs, u, m_sensor, 0);
   for (unsigned i = 0; i < nsteps; i++) {
     if (i % (step_per_sec / m_fps) == 0) {
       m_sensor.observe(m_env, sensor_pixs);
-      m_controller->react(sensor_pixs, u, m_sensor);
+      m_controller->react(sensor_pixs, u, m_sensor, i * m_env.dt);
 
       if (m_make_observer_video) {
         m_observer->observe(m_env, observer_pixs);

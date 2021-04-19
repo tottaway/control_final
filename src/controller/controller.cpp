@@ -11,9 +11,13 @@
 
 namespace control_final {
 
+Controller::Controller(const std::string &filename) {
+  auto file = YAML::LoadFile(filename);
+  m_history_len = file["history_len"].as<double>();
+}
+
 using namespace cv;
-State Controller::predict_state(std::vector<char> &pixs,
-                                 const Sensor &sensor) {
+void Controller::predict_state(std::vector<char> &pixs, const Sensor &sensor) {
   const unsigned xres = sensor.get_xres();
   const unsigned yres = sensor.get_yres();
 
@@ -41,7 +45,7 @@ State Controller::predict_state(std::vector<char> &pixs,
   const int min_radius = 1;
   // TODO: calculate second part based off of the angle the ball should take up
   // in the image based off of the distance from the table
-  const int max_radius = xres / 24;
+  const int max_radius = xres / 5;
   HoughCircles(detected_edges, circles, HOUGH_GRADIENT, 1,
                detected_edges.rows, // change this value to detect circles with
                                     // different distances to each other
@@ -58,7 +62,12 @@ State Controller::predict_state(std::vector<char> &pixs,
     State ret;
     ret.ball_pose.x = 0;
     ret.ball_pose.y = 0;
-    return ret;
+
+    m_history.push_front(ret);
+    if (m_history.size() > m_history_len) {
+      m_history.pop_back();
+    }
+    return;
   }
   if (ncircles > 1) {
     std::cout << "Need to handle case where more that one circle is detected"
@@ -111,6 +120,16 @@ State Controller::predict_state(std::vector<char> &pixs,
   // TODO: zero out of calculate rest of fields
   ret.ball_pose.x = y_coord;
   ret.ball_pose.y = -x_coord;
-  return ret;
+
+  // TODO: table radius should be read from config file
+  ret.ball_pose.x = std::max(-0.4, ret.ball_pose.x);
+  ret.ball_pose.x = std::min(0.4, ret.ball_pose.x);
+  ret.ball_pose.y = std::max(-0.4, ret.ball_pose.y);
+  ret.ball_pose.y = std::min(0.4, ret.ball_pose.y);
+
+  m_history.push_front(ret);
+  if (m_history.size() > m_history_len) {
+    m_history.pop_back();
+  }
 }
 } // namespace control_final

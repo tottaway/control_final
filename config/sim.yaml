@@ -20,11 +20,11 @@ init_table_pose:
 # specify fields of the initial table pose here, if not specified all fields
 # will default to 0
 init_ball_pose:
-  x: 0
+  x: -0.1
   y: 0.1
   z: 0.04
 
   aor: [0, 1, 1] # axis of rotation
 
 # Total time in seconds
-T: 5
+T: 8
