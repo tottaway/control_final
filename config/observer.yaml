@@ -2,8 +2,8 @@ camera_pos: [-2, 0, 0.3]
 camera_dir: [1, 0, -0.1]
 
 # resolution
-xres: 720
-yres: 480
+# xres: 480
+# yres: 240
 # higher resolution
-# xres: 1920
-# yres: 1080
+xres: 1920
+yres: 1080
