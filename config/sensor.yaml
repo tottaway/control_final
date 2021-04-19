@@ -5,5 +5,5 @@ yres: 480
 # yres: 1080
 
 # looking from above
-camera_pos: [0, 0, 3]
+camera_pos: [0, 0, 2]
 camera_dir: [0, 0, -1]

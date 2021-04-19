@@ -3,11 +3,13 @@
 #include "control_final/controller/pid_controller.h"
 #include "control_final/model/environment.h"
 #include "control_final/model/render_config.h"
+#include "control_final/model/state.h"
 #include "control_final/sensor/sensor.h"
 #include "control_final/util/parse_configs.h"
 
 #include "movie.h"
 #include "yaml.h"
+#include <Eigen/Dense>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -32,16 +34,34 @@ void Simulator::_parse_sim_configs(const std::string &config_dir) {
 
     // have sensible default for output file
     if (!file["observer_video_filename"]) {
-      _writer = std::make_unique<MovieWriter>("out", _observer->get_xres(),
-                                              _observer->get_yres());
+      _observer_writer = std::make_unique<MovieWriter>(
+          "observer_out", _observer->get_xres(), _observer->get_yres());
     } else {
       const auto out_filename =
           file["observer_video_filename"].as<std::string>();
-      _writer = std::make_unique<MovieWriter>(
+      _observer_writer = std::make_unique<MovieWriter>(
           out_filename, _observer->get_xres(), _observer->get_yres());
     }
   } else {
     _make_observer_video = false;
+  }
+
+  // give support for saving sensor video
+  if (file["make_sensor_video"] && file["make_sensor_video"].as<bool>()) {
+    _make_sensor_video = true;
+    const auto sensor_config_file = config_dir + "/sensor.yaml";
+
+    // have sensible default for output file
+    if (!file["sensor_video_filename"]) {
+      _sensor_writer = std::make_unique<MovieWriter>(
+          "sensor_out", _sensor.get_xres(), _sensor.get_yres());
+    } else {
+      const auto out_filename = file["sensor_video_filename"].as<std::string>();
+      _sensor_writer = std::make_unique<MovieWriter>(
+          out_filename, _sensor.get_xres(), _sensor.get_yres());
+    }
+  } else {
+    _make_sensor_video = false;
   }
 
   // get total sim time
@@ -170,9 +190,15 @@ void Simulator::run() {
   // the first second of video
   if (_make_observer_video) {
     _observer->observe(_env, observer_pixs);
-    /* for (unsigned i = 0; i < 25; i++) { */
-    /*   _writer->addFrame((const uint8_t *)&pixs[0]); */
-    /* } */
+    for (unsigned i = 0; i < 25; i++) {
+      _observer_writer->addFrame((const uint8_t *)&observer_pixs[0]);
+    }
+  }
+  if (_make_sensor_video) {
+    _sensor.observe(_env, sensor_pixs);
+    for (unsigned i = 0; i < 25; i++) {
+      _sensor_writer->addFrame((const uint8_t *)&sensor_pixs[0]);
+    }
   }
 
   const unsigned nsteps = _T / _env.DT;
@@ -181,11 +207,18 @@ void Simulator::run() {
   for (unsigned i = 0; i < nsteps; i++) {
     if (i % (step_per_sec / _fps) == 0) {
       _sensor.observe(_env, sensor_pixs);
-      _controller->react(sensor_pixs, u);
+      Eigen::Vector3d true_pos = _env.get_ball_pos();
+      std::cout << "True pos: [" << true_pos[0] << ", " << true_pos[1] << "]"
+                << std::endl;
+      _controller->react(sensor_pixs, u, _sensor);
 
       if (_make_observer_video) {
         _observer->observe(_env, observer_pixs);
-        _writer->addFrame((const uint8_t *)&observer_pixs[0]);
+        _observer_writer->addFrame((const uint8_t *)&observer_pixs[0]);
+      }
+      if (_make_sensor_video) {
+        // sensor has already observered so we don't need to redo that
+        _sensor_writer->addFrame((const uint8_t *)&sensor_pixs[0]);
       }
     }
     _env.step(u);

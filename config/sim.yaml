@@ -2,9 +2,13 @@
 fps: 25
 
 # output video
-make_observer_video: true
+make_observer_video: false
 # library adds .mp4 extension for you
 observer_video_filename: out
+
+make_sensor_video: true
+# library adds .mp4 extension for you
+sensor_video_filename: out
 
 # specify fields of the initial table pose here, if not specified all fields
 # will default to 0
@@ -15,8 +19,13 @@ init_table_pose:
 # specify fields of the initial table pose here, if not specified all fields
 # will default to 0
 init_ball_pose:
+  x: 0.2
+  y: 0.1
   z: 0.04
+
+  xdot: 0.2
+  ydot: 0.3
   aor: [0, 1, 0] # axis of rotation
 
 # Total time in seconds
-T: 4
+T: 2

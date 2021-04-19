@@ -31,7 +31,11 @@ private:
   bool _make_observer_video;
   // This are pointers so that they can be null if the flag above is false
   std::unique_ptr<Sensor> _observer;
-  std::unique_ptr<MovieWriter> _writer;
+  std::unique_ptr<MovieWriter> _observer_writer;
+
+  // This is the camera which the observer is watching through
+  bool _make_sensor_video;
+  std::unique_ptr<MovieWriter> _sensor_writer;
 
   void _parse_sim_configs(const std::string &sim_file_name);
 };

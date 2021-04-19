@@ -21,9 +21,11 @@ public:
 
   void observe(const Environment &env, std::vector<char> &pixs);
 
-  size_t get_xres() { return _xres; }
-  size_t get_yres() { return _yres; }
-  size_t get_pixs_size() { return _xres * _yres * 3; }
+  size_t get_xres() const { return _xres; }
+  size_t get_yres() const { return _yres; }
+  Eigen::Vector3d get_camera_pos() const { return _camera_pos; }
+  Eigen::Vector3d get_camera_dir() const { return _camera_dir; }
+  size_t get_pixs_size() const { return _xres * _yres * 3; }
 
 private:
   unsigned _xres;
