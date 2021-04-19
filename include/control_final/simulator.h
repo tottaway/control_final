@@ -6,6 +6,7 @@
 #include "control_final/sensor/sensor.h"
 
 #include "movie.h"
+#include "yaml.h"
 #include <memory>
 #include <vector>
 
@@ -13,7 +14,7 @@ namespace control_final {
 
 class Simulator {
 public:
-  Simulator(const std::string &config_dir);
+  Simulator(const YAML::Node &node);
   void run();
 
   State get_state() { return m_env.get_state(); };
@@ -37,7 +38,7 @@ private:
   bool m_make_sensor_video;
   std::unique_ptr<MovieWriter> m_sensor_writer;
 
-  void parse_sim_configs(const std::string &sim_file_name);
+  void parse_sim_configs(const YAML::Node &node);
 };
 
 } // namespace control_final

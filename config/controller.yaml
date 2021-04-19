@@ -1,8 +1,0 @@
-controller_type: pid
-Kp: 0.08
-Kd: 0.002
-Ki: 0.00001
-
-ref: [0, 0]
-
-history_len: 2

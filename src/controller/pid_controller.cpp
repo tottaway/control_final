@@ -7,17 +7,16 @@
 #include <iostream>
 
 namespace control_final {
-PIDController::PIDController(const std::string &filename)
-    : Controller(filename) {
+PIDController::PIDController(const YAML::Node &node) : Controller(node) {
 
   // TODO: make this better
-  auto file = YAML::LoadFile(filename);
-  m_Kp = file["Kp"].as<double>();
-  m_Kd = file["Kd"].as<double>();
-  m_Ki = file["Ki"].as<double>();
+  auto controller_node = node["controller"];
+  m_Kp = controller_node["Kp"].as<double>();
+  m_Kd = controller_node["Kd"].as<double>();
+  m_Ki = controller_node["Ki"].as<double>();
 
-  m_ref_x = file["ref"][0].as<double>();
-  m_ref_y = file["ref"][1].as<double>();
+  m_ref_x = controller_node["ref"][0].as<double>();
+  m_ref_y = controller_node["ref"][1].as<double>();
 
   m_last_x = 0;
   m_last_y = 0;

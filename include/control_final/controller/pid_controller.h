@@ -3,18 +3,18 @@
 #include "control_final/controller/reference.h"
 #include "control_final/sensor/sensor.h"
 
+#include "yaml.h"
+
 namespace control_final {
 
 class PIDController : public Controller {
 public:
-  PIDController(const std::string &filename);
+  PIDController(const YAML::Node &node);
   void react(std::vector<char> &pixs, Reference &u, const Sensor &sensor,
              const double t) override;
 
-
-
 private:
-  // TODO: right now these are used to throttle the controller but I want to 
+  // TODO: right now these are used to throttle the controller but I want to
   // switch to a force based model
   double m_last_x;
   double m_last_y;
@@ -31,6 +31,6 @@ private:
   double m_int_err_y;
 
   // TODO: this should be read from config
-  static constexpr double m_dt = 0.001;
+  static constexpr double m_dt = 1. / 25.;
 };
 } // namespace control_final

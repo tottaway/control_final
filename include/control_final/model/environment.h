@@ -4,6 +4,7 @@
 
 #include "raytracer/data_structures/object_vector.h"
 
+#include "yaml.h"
 #include <string>
 
 namespace control_final {
@@ -27,7 +28,7 @@ public:
     m_state = {ball_pose, table_pose};
   };
 
-  Environment(const std::string &filename);
+  Environment(const YAML::Node &node);
 
   // advances scene by dt
   void step(const Reference &u);
@@ -58,7 +59,8 @@ public:
 
   Eigen::Vector3d get_ball_vel() const {
     Eigen::Vector3d res;
-    res << m_state.ball_pose.xdot, m_state.ball_pose.ydot, m_state.ball_pose.zdot;
+    res << m_state.ball_pose.xdot, m_state.ball_pose.ydot,
+        m_state.ball_pose.zdot;
     return res;
   };
 
@@ -118,8 +120,6 @@ public:
     m_state.ball_pose.omega = new_omega;
   };
 
-  raytracer::ObjectVector to_object_vector() const;
-
 private:
   State m_state;
 
@@ -130,7 +130,7 @@ private:
   // is applied to the surface of the sphere where normal is the normalized
   // vector between the point the force is acting and the center of the ball
   void apply_torque(const Eigen::Vector3d &force,
-                     const Eigen::Vector3d &normal);
+                    const Eigen::Vector3d &normal);
 
   // moves the ball according to the current velocity
   void move_ball();

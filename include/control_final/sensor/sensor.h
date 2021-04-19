@@ -1,12 +1,16 @@
 #pragma once
 #include "control_final/model/environment.h"
+#include "control_final/model/render_config.h"
 #include "control_final/model/state.h"
 
+#include "raytracer/data_structures/object_vector.h"
 #include "raytracer/renderer.h"
-#include <Magick++.h>
 
+#include "yaml.h"
 #include <Eigen/Dense>
+#include <Magick++.h>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -14,10 +18,7 @@ namespace control_final {
 
 class Sensor {
 public:
-  Sensor(const unsigned x_res, const unsigned y_res,
-         const Eigen::Vector3d camera_pos, const Eigen::Vector3d camera_dir);
-
-  Sensor(const std::string &filename);
+  Sensor(const YAML::Node &node, const std::string &sensor_name);
 
   void observe(const Environment &env, std::vector<char> &pixs);
 
@@ -35,6 +36,14 @@ private:
 
   std::unique_ptr<raytracer::Renderer> m_renderer;
   void process();
+
+  // Makes object vector to pass to raytracer
+  void make_object_vector(const Environment &env);
+  // This is an optional since it doesn't make sense to initialize it
+  // immediately
+  std::optional<raytracer::ObjectVector> m_ov;
+
+  RenderingConfigs m_render_configs;
 };
 
 } // namespace control_final

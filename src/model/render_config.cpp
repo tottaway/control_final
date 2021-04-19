@@ -11,28 +11,17 @@
 #include <string>
 
 namespace control_final {
-namespace RenderingConfigs {
-raytracer::Material ball_material;
-
-raytracer::Material table_material;
-
-raytracer::Material rotation_viz_material;
-bool show_rotation_viz;
-
-std::vector<raytracer::Light> lights;
-}; // namespace RenderingConfigs
-
-void parse_render_configs(const std::string &filename) {
-  auto file = YAML::LoadFile(filename);
+RenderingConfigs::RenderingConfigs(const YAML::Node &node) {
+  auto render_node = node["render"];
 
   // This part is ripped straight from the raytracer project
   // error checking
-  if (!file["materials"]) {
-    std::cout << "Did not specify materials in " << filename << std::endl;
+  if (!render_node["materials"]) {
+    std::cout << "Did not specify materials in render" << std::endl;
     exit(1);
   }
 
-  auto materials_node = file["materials"];
+  auto materials_node = render_node["materials"];
   std::map<std::string, raytracer::Material> materials;
   for (std::size_t i = 0; i < materials_node.size(); i++) {
     // Note colors are specified in the range [0, 255], but I need then in
@@ -57,44 +46,43 @@ void parse_render_configs(const std::string &filename) {
   }
 
   bool show_rotation_viz = false;
-  if (file["show_rotation_viz"]) {
-    YAML::convert<bool>::decode(file["show_rotation_viz"], show_rotation_viz);
+  if (render_node["show_rotation_viz"]) {
+    YAML::convert<bool>::decode(render_node["show_rotation_viz"],
+                                show_rotation_viz);
   }
 
   // error checking
   if (!materials.count("ball_material")) {
-    std::cout << "Did not specify ball_material in " << filename << std::endl;
+    std::cout << "Did not specify ball_material in render" << std::endl;
     exit(1);
   } else if (!materials.count("table_material")) {
-    std::cout << "Did not specify table_material in " << filename << std::endl;
+    std::cout << "Did not specify table_material in render" << std::endl;
     exit(1);
-  } else if (file["show_rotation_viz"] && show_rotation_viz &&
+  } else if (render_node["show_rotation_viz"] && show_rotation_viz &&
              !materials.count("rotation_viz_material")) {
     std::cout << "show_rotation_viz was set to true, but no "
-                 "rotation_viz_material was definied in "
-              << filename << std::endl;
+                 "rotation_viz_material was definied in render"
+              << std::endl;
     exit(1);
   }
 
-  RenderingConfigs::ball_material = materials["ball_material"];
-  RenderingConfigs::table_material = materials["table_material"];
+  ball_material = materials["ball_material"];
+  table_material = materials["table_material"];
 
-  RenderingConfigs::show_rotation_viz = show_rotation_viz;
   if (show_rotation_viz) {
-    RenderingConfigs::rotation_viz_material =
-        materials["rotation_viz_material"];
+    rotation_viz_material = materials["rotation_viz_material"];
   }
 
   // error checking
-  if (!file["lights"]) {
-    std::cout << "Did not specify lights in " << filename << std::endl;
+  if (!render_node["lights"]) {
+    std::cout << "Did not specify lights in render" << std::endl;
     exit(1);
   }
 
   // parse the lights (this was also ripped from the raytracer project
-  auto lights_node = file["lights"];
+  auto lights_node = render_node["lights"];
   if (lights_node.size() == 0) {
-    std::cout << "Lights node found in " << filename
+    std::cout << "Lights node found in render"
               << " but no lights were defined" << std::endl;
     exit(1);
   }
@@ -122,7 +110,7 @@ void parse_render_configs(const std::string &filename) {
       l.dir = dir;
     }
 
-    RenderingConfigs::lights.push_back(l);
+    lights.push_back(l);
   }
 }
 } // namespace control_final

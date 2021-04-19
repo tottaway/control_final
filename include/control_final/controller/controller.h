@@ -2,13 +2,14 @@
 #include "control_final/controller/reference.h"
 #include "control_final/sensor/sensor.h"
 
+#include "yaml.h"
 #include <deque>
 
 namespace control_final {
 
 class Controller {
 public:
-  Controller(const std::string &filename);
+  Controller(const YAML::Node &node);
   // we take in the sensor so that we can have access to parameters like the
   // camera location and dir
   virtual void react(std::vector<char> &pixs, Reference &u,

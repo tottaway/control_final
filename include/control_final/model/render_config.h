@@ -7,17 +7,17 @@
 
 namespace control_final {
 // These are read in from config/render_config.yaml
-namespace RenderingConfigs {
-extern raytracer::Material ball_material;
+struct RenderingConfigs {
+  RenderingConfigs(const YAML::Node &node);
 
-extern raytracer::Material table_material;
+  raytracer::Material ball_material;
 
-extern raytracer::Material rotation_viz_material;
-extern bool show_rotation_viz;
+  raytracer::Material table_material;
 
-extern std::vector<raytracer::Light> lights;
-}; // namespace RenderingConfigs
+  raytracer::Material rotation_viz_material;
+  bool show_rotation_viz;
 
-void parse_render_configs(const std::string &filename);
+  std::vector<raytracer::Light> lights;
+};
 
 } // namespace control_final

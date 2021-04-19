@@ -11,9 +11,9 @@
 
 namespace control_final {
 
-Controller::Controller(const std::string &filename) {
-  auto file = YAML::LoadFile(filename);
-  m_history_len = file["history_len"].as<double>();
+Controller::Controller(const YAML::Node &node) {
+  auto controller_node = node["controller"];
+  m_history_len = controller_node["history_len"].as<unsigned>();
 }
 
 using namespace cv;
