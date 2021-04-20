@@ -34,6 +34,6 @@ private:
   double m_int_err_y;
 
   // TODO: this should be read from config
-  static constexpr double m_dt = 1. / 25.;
+  double m_dt;
 };
 } // namespace control_final

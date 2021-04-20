@@ -1,15 +1,15 @@
 sim:
   # currently fps is a constant decided by the library I'm using
-  fps: 25
+  fps: 24
 
   # output video
   make_observer_video: true
   # library adds .mp4 extension for you
-  observer_video_filename: out
+  observer_video_filename: out.avi
 
   make_sensor_video: true
   # library adds .mp4 extension for you
-  sensor_video_filename: sensor_out
+  sensor_video_filename: sensor_out.avi
 
   # specify fields of the initial table pose here, if not specified all fields
   # will default to 0
@@ -28,18 +28,18 @@ sim:
     aor: [0, 1, 1] # axis of rotation
 
   # Total time in seconds
-  T: 4
+  T: 6
 
 controller:
   controller_type: pid
 
   # parameters for outer loop which controls ball location
   Kp: 0.1
-  Kd: 0.1
-  Ki: 0.03
+  Kd: 0.08
+  Ki: 0.04
 
   # parameters for the inner loop which controls the table positions
-  inner_Kp: 0.3
+  inner_Kp: 0.4
   inner_Kd: 0.1
 
   ref: [0, 0]
@@ -68,7 +68,7 @@ sensor:
   camera_dir: [0, 0, -1]
 
 observer:
-  camera_pos: [-2, 0, 0.3]
+  camera_pos: [-2, 0, 0.4]
   camera_dir: [1, 0, -0.1]
 
   # resolution

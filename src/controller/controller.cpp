@@ -1,5 +1,6 @@
 #include "control_final/controller/controller.h"
 #include "control_final/sensor/sensor.h"
+#include "control_final/model/state.h"
 
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgcodecs.hpp"
@@ -14,6 +15,13 @@ namespace control_final {
 Controller::Controller(const YAML::Node &node) {
   auto controller_node = node["controller"];
   m_history_len = controller_node["history_len"].as<unsigned>();
+
+  const Eigen::Vector3d init_aor{0, 1, 0};
+  BallPose ball_pose{0, 0, 0, 0, 0, 0, init_aor, 0};
+  TablePose table_pose{0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  State zero_state = {ball_pose, table_pose};
+  m_history.push_front(zero_state);
+  m_history.push_front(zero_state);
 }
 
 using namespace cv;
@@ -36,8 +44,10 @@ void Controller::predict_state(std::vector<char> &pixs, const Sensor &sensor) {
   const int kernel_size = 3;
   Mat dst, detected_edges;
   blur(gray, detected_edges, Size(3, 3));
-  Canny(detected_edges, detected_edges, lowThreshold, lowThreshold * ratio,
+  Canny(detected_edges, detected_edges, 0, 100,
         kernel_size);
+  /* cv::imshow("detected edges", detected_edges); */
+  /* cv::waitKey(); */
 
   // find circles
   // source: https://docs.opencv.org/3.4/d4/d70/tutorial_hough_circle.html
@@ -49,7 +59,7 @@ void Controller::predict_state(std::vector<char> &pixs, const Sensor &sensor) {
   HoughCircles(detected_edges, circles, HOUGH_GRADIENT, 1,
                detected_edges.rows, // change this value to detect circles with
                                     // different distances to each other
-               100, 30, min_radius, max_radius // change the last two parameters
+               200, 20, min_radius, max_radius // change the last two parameters
                // (min_radius & max_radius) to detect larger circles
   );
 
@@ -78,14 +88,13 @@ void Controller::predict_state(std::vector<char> &pixs, const Sensor &sensor) {
   Vec3i c = circles[0];
 
   // Uncomment to display image with hightlighted circle and then exit
-  /* // circle center */
-  /* circle(im, center, 1, Scalar(0, 100, 100), 3, LINE_AA); */
+  // circle center
+  /* circle(im, Point(c[0], c[1]), 1, Scalar(0, 100, 100), 3, LINE_AA); */
   /* // circle outline */
   /* int radius = c[2]; */
-  /* circle(im, center, radius, Scalar(255, 0, 255), 3, LINE_AA); */
+  /* circle(im, Point(c[0], c[1]), radius, Scalar(255, 0, 255), 3, LINE_AA); */
   /* cv::imshow("detected circles", im); */
   /* cv::waitKey(); */
-  /* exit(1); */
 
   // We assume that the ball is on the table and that the camera is pointing
   // straight down

@@ -7,18 +7,29 @@
 #include "control_final/sensor/sensor.h"
 #include "control_final/util/parse_configs.h"
 
-#include "movie.h"
 #include "yaml.h"
 #include <Eigen/Dense>
 #include <iostream>
 #include <map>
 #include <memory>
+#include <opencv2/opencv.hpp>
 #include <string>
 
 namespace control_final {
 
 void Simulator::parse_sim_configs(const YAML::Node &node) {
   auto sim_node = node["sim"];
+
+
+  // get fps of sensor and observer
+  if (!sim_node["fps"]) {
+    std::cout
+        << "Warning: Didn't specify fps in sim, using default value of 25 fps"
+        << std::endl;
+    m_fps = 25;
+  } else {
+    m_fps = sim_node["fps"].as<unsigned>();
+  }
 
   // get information related to observer
   if (sim_node["make_observer_video"] &&
@@ -33,13 +44,18 @@ void Simulator::parse_sim_configs(const YAML::Node &node) {
 
     // have sensible default for output file
     if (!sim_node["observer_video_filename"]) {
-      m_observer_writer = std::make_unique<MovieWriter>(
-          "observer_out", m_observer->get_xres(), m_observer->get_yres());
+      cv::Size frame_size{m_observer->get_xres(), m_observer->get_yres()};
+      m_observer_writer = std::make_unique<cv::VideoWriter>(
+          "observer_out.mp4", cv::VideoWriter::fourcc('X', 'V', 'I', 'D'),
+          (double)m_fps, frame_size, true);
     } else {
       const auto out_filename =
           sim_node["observer_video_filename"].as<std::string>();
-      m_observer_writer = std::make_unique<MovieWriter>(
-          out_filename, m_observer->get_xres(), m_observer->get_yres());
+
+      cv::Size frame_size{m_observer->get_xres(), m_observer->get_yres()};
+      m_observer_writer = std::make_unique<cv::VideoWriter>(
+          out_filename, cv::VideoWriter::fourcc('X', 'V', 'I', 'D'),
+          (double)m_fps, frame_size, true);
     }
   } else {
     m_make_observer_video = false;
@@ -53,13 +69,17 @@ void Simulator::parse_sim_configs(const YAML::Node &node) {
 
     // have sensible default for output file
     if (!sim_node["sensor_video_filename"]) {
-      m_sensor_writer = std::make_unique<MovieWriter>(
-          "sensor_out", m_sensor.get_xres(), m_sensor.get_yres());
+      cv::Size frame_size{m_sensor.get_xres(), m_sensor.get_yres()};
+      m_sensor_writer = std::make_unique<cv::VideoWriter>(
+          "sensor_out.mp4", cv::VideoWriter::fourcc('X', 'V', 'I', 'D'),
+          (double)m_fps, frame_size, true);
     } else {
       const auto out_filename =
           sim_node["sensor_video_filename"].as<std::string>();
-      m_sensor_writer = std::make_unique<MovieWriter>(
-          out_filename, m_sensor.get_xres(), m_sensor.get_yres());
+      cv::Size frame_size{m_sensor.get_xres(), m_sensor.get_yres()};
+      m_sensor_writer = std::make_unique<cv::VideoWriter>(
+          out_filename, cv::VideoWriter::fourcc('X', 'V', 'I', 'D'),
+          (double)m_fps, frame_size, true);
     }
   } else {
     m_make_sensor_video = false;
@@ -73,16 +93,6 @@ void Simulator::parse_sim_configs(const YAML::Node &node) {
     m_T = 5;
   } else {
     m_T = sim_node["T"].as<double>();
-  }
-
-  // get fps of sensor and observer
-  if (!sim_node["fps"]) {
-    std::cout
-        << "Warning: Didn't specify fps in sim, using default value of 25 fps"
-        << std::endl;
-    m_fps = 25;
-  } else {
-    m_fps = sim_node["fps"].as<unsigned>();
   }
 
   // get initial state
@@ -187,21 +197,6 @@ void Simulator::run() {
     observer_pixs.resize(m_observer->get_pixs_size());
   }
 
-  // Super jank hack since the library I'm using to make the videos messes us
-  // the first second of video
-  if (m_make_observer_video) {
-    m_observer->observe(m_env, observer_pixs);
-    for (unsigned i = 0; i < 25; i++) {
-      m_observer_writer->addFrame((const uint8_t *)&observer_pixs[0]);
-    }
-  }
-  if (m_make_sensor_video) {
-    m_sensor.observe(m_env, sensor_pixs);
-    for (unsigned i = 0; i < 25; i++) {
-      m_sensor_writer->addFrame((const uint8_t *)&sensor_pixs[0]);
-    }
-  }
-
   const unsigned nsteps = m_T / m_env.dt;
   const unsigned step_per_sec = 1. / m_env.dt;
   ControllerOutput u;
@@ -209,20 +204,27 @@ void Simulator::run() {
   m_controller->react(sensor_pixs, m_sensor, 0);
   for (unsigned i = 0; i < nsteps; i++) {
     if (i % (step_per_sec / m_fps) == 0) {
+      std::cout << "On frame: " << i / (step_per_sec / m_fps) << std::endl;
       m_sensor.observe(m_env, sensor_pixs);
       m_controller->react(sensor_pixs, m_sensor, i * m_env.dt);
 
       if (m_make_observer_video) {
         m_observer->observe(m_env, observer_pixs);
-        m_observer_writer->addFrame((const uint8_t *)&observer_pixs[0]);
+        cv::Mat im(m_observer->get_yres(), m_observer->get_xres(), CV_8UC3,
+                   (uint8_t *)&observer_pixs[0]);
+        m_observer_writer->write(im);
       }
       if (m_make_sensor_video) {
         // sensor has already observered so we don't need to redo that
-        m_sensor_writer->addFrame((const uint8_t *)&sensor_pixs[0]);
+        cv::Mat im(m_sensor.get_yres(), m_sensor.get_xres(), CV_8UC3,
+                   (uint8_t *)&sensor_pixs[0]);
+        m_sensor_writer->write(im);
       }
     }
     m_controller->step(u, m_env.get_table_pose());
     m_env.step(u);
   }
+  m_observer_writer->release();
+  m_sensor_writer->release();
 }
 } // namespace control_final

@@ -27,10 +27,6 @@ target_link_libraries(control_final raytracer)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 target_link_libraries(control_final Eigen3::Eigen)
 
-# moviemaker-cpp for creating mp4s
-add_subdirectory(./extern/moviemaker-cpp)
-target_link_libraries(control_final moviemaker-cpp)
-
 # yaml-cpp for config files
 find_package(yaml-cpp REQUIRED)
 target_link_libraries(control_final yaml-cpp)

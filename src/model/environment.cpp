@@ -6,6 +6,7 @@
 
 #include "yaml.h"
 #include <Eigen/Dense>
+#include <algorithm>
 #include <iostream>
 #include <math.h>
 #include <memory>
@@ -24,11 +25,11 @@ Environment::Environment(const YAML::Node &node) {
     std::cout << "Did not specify ball_radius in environment node" << std::endl;
     exit(1);
   } else if (!env_node["table_mass"]) {
-    std::cout << "Did not specify table_mass in environment node"
-              << std::endl;
+    std::cout << "Did not specify table_mass in environment node" << std::endl;
     exit(1);
   } else if (!env_node["table_height"]) {
-    std::cout << "Did not specify table_height in environment node" << std::endl;
+    std::cout << "Did not specify table_height in environment node"
+              << std::endl;
     exit(1);
   } else if (!env_node["table_radius"]) {
     std::cout << "Did not specify table_radius in environment node"
@@ -161,6 +162,15 @@ void Environment::apply_torque(const Eigen::Vector3d &force,
 void Environment::apply_controller_output(const ControllerOutput &u) {
   m_state.table_pose.theta_dot_x += dt * u.torque_x / get_table_I();
   m_state.table_pose.theta_dot_y += dt * u.torque_y / get_table_I();
+
+  m_state.table_pose.theta_dot_x =
+      std::max(-0.4, m_state.table_pose.theta_dot_x);
+  m_state.table_pose.theta_dot_x =
+      std::min(0.4, m_state.table_pose.theta_dot_x);
+  m_state.table_pose.theta_dot_y =
+      std::max(-0.4, m_state.table_pose.theta_dot_y);
+  m_state.table_pose.theta_dot_y =
+      std::min(0.4, m_state.table_pose.theta_dot_y);
 }
 
 void Environment::move_ball() {

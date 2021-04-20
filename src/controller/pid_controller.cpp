@@ -21,6 +21,8 @@ PIDController::PIDController(const YAML::Node &node) : Controller(node) {
   m_ref_x = controller_node["ref"][0].as<double>();
   m_ref_y = controller_node["ref"][1].as<double>();
 
+  m_dt = 1 / node["sim"]["fps"].as<double>();
+
   m_ref_theta_x = 0;
   m_ref_theta_y = 0;
 
@@ -56,11 +58,10 @@ void PIDController::react(std::vector<char> &pixs, const Sensor &sensor,
   m_ref_theta_y = m_Kp * curr_err_x + m_Kd * d_err_x + m_Ki * m_int_err_x;
 
   // Handle saturation
-  m_ref_theta_x = std::max(-0.523, m_ref_theta_x);
-  m_ref_theta_x = std::min(0.523, m_ref_theta_x);
-  m_ref_theta_y = std::max(-0.523, m_ref_theta_y);
-  m_ref_theta_y = std::min(0.523, m_ref_theta_y);
-
+  m_ref_theta_x = std::max(-0.4, m_ref_theta_x);
+  m_ref_theta_x = std::min(0.4, m_ref_theta_x);
+  m_ref_theta_y = std::max(-0.4, m_ref_theta_y);
+  m_ref_theta_y = std::min(0.4, m_ref_theta_y);
 
 }
 
