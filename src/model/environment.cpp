@@ -1,4 +1,5 @@
 #include "control_final/model/environment.h"
+#include "control_final/controller/controller.h"
 #include "control_final/model/render_config.h"
 
 #include "raytracer/data_structures/object_vector.h"
@@ -22,9 +23,12 @@ Environment::Environment(const YAML::Node &node) {
   } else if (!env_node["ball_radius"]) {
     std::cout << "Did not specify ball_radius in environment node" << std::endl;
     exit(1);
-  } else if (!env_node["table_height"]) {
-    std::cout << "Did not specify table_height in environment node"
+  } else if (!env_node["table_mass"]) {
+    std::cout << "Did not specify table_mass in environment node"
               << std::endl;
+    exit(1);
+  } else if (!env_node["table_height"]) {
+    std::cout << "Did not specify table_height in environment node" << std::endl;
     exit(1);
   } else if (!env_node["table_radius"]) {
     std::cout << "Did not specify table_radius in environment node"
@@ -41,6 +45,7 @@ Environment::Environment(const YAML::Node &node) {
   ball_mass = env_node["ball_mass"].as<double>();
   ball_radius = env_node["ball_radius"].as<double>();
   table_height = env_node["table_height"].as<double>();
+  table_mass = env_node["table_mass"].as<double>();
   table_radius = env_node["table_radius"].as<double>();
   dt = env_node["dt"].as<double>();
   mu = env_node["mu"].as<double>();
@@ -53,9 +58,8 @@ Environment::Environment(const YAML::Node &node) {
   m_state = {ball_pose, table_pose};
 }
 
-void Environment::step(const Reference &u) {
-  m_state.table_pose.theta_dot_x = u.table_pose.theta_dot_x;
-  m_state.table_pose.theta_dot_y = u.table_pose.theta_dot_y;
+void Environment::step(const ControllerOutput &u) {
+  apply_controller_output(u);
 
   // check if ball is in contact with the table and apply corrective force
   const Eigen::Vector3d normal_vec = get_table_normal_vec();
@@ -135,9 +139,9 @@ void Environment::apply_torque(const Eigen::Vector3d &force,
 
   const double omega = get_ball_omega();
   if (omega > 0) {
-    set_ball_omega(get_ball_omega() + dt * torque.dot(aor) / get_I());
+    set_ball_omega(get_ball_omega() + dt * torque.dot(aor) / get_ball_I());
   } else {
-    set_ball_omega(get_ball_omega() + dt * torque.norm() / get_I());
+    set_ball_omega(get_ball_omega() + dt * torque.norm() / get_ball_I());
     set_ball_aor(torque.normalized());
   }
 
@@ -152,6 +156,11 @@ void Environment::apply_torque(const Eigen::Vector3d &force,
     Eigen::Vector3d d_aor = (1 / L) * torque_perp_to_aor * dt;
     set_ball_aor(aor + d_aor);
   }
+}
+
+void Environment::apply_controller_output(const ControllerOutput &u) {
+  m_state.table_pose.theta_dot_x += dt * u.torque_x / get_table_I();
+  m_state.table_pose.theta_dot_y += dt * u.torque_y / get_table_I();
 }
 
 void Environment::move_ball() {

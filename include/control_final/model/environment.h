@@ -1,5 +1,4 @@
 #pragma once
-#include "control_final/controller/reference.h"
 #include "control_final/model/state.h"
 
 #include "raytracer/data_structures/object_vector.h"
@@ -9,6 +8,9 @@
 
 namespace control_final {
 
+// forward declare to avoid circular imports, defined in controller.h
+struct ControllerOutput;
+
 class Environment {
 public:
   // Constants for the scene objects
@@ -17,6 +19,7 @@ public:
   double ball_mass;
   double table_radius;
   double table_height;
+  double table_mass;
   double dt;
   double mu;
 
@@ -31,7 +34,7 @@ public:
   Environment(const YAML::Node &node);
 
   // advances scene by dt
-  void step(const Reference &u);
+  void step(const ControllerOutput &u);
 
   // Lots of getters
   State get_state() const { return m_state; };
@@ -73,12 +76,15 @@ public:
 
   // Assumes that the ball is a shell
   double get_angular_momentum() const {
-    return get_I() * m_state.ball_pose.omega;
+    return get_ball_I() * m_state.ball_pose.omega;
   }
 
   Eigen::Vector3d get_table_normal_vec() const;
-  double get_I() const {
+  double get_ball_I() const {
     return (2. / 3.) * ball_mass * ball_radius * ball_radius;
+  }
+  double get_table_I() const {
+    return (1. / 2.) * table_mass * table_radius * table_radius;
   }
 
   // Lots of setters
@@ -140,6 +146,9 @@ private:
 
   // moves the ball according to passed in velocity
   void apply_vel(const Eigen::Vector3d &vel);
+
+  // applies forces to table based on controller output 
+  void apply_controller_output(const ControllerOutput &u);
 };
 
 } // namespace control_final

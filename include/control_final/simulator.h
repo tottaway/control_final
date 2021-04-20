@@ -1,7 +1,6 @@
 #pragma once
 
 #include "control_final/controller/controller.h"
-#include "control_final/controller/reference.h"
 #include "control_final/model/environment.h"
 #include "control_final/sensor/sensor.h"
 

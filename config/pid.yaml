@@ -32,17 +32,25 @@ sim:
 
 controller:
   controller_type: pid
+
+  # parameters for outer loop which controls ball location
   Kp: 0.1
   Kd: 0.1
-  Ki: 0.001
+  Ki: 0.03
+
+  # parameters for the inner loop which controls the table positions
+  inner_Kp: 0.3
+  inner_Kd: 0.1
 
   ref: [0, 0]
 
   history_len: 2
 
 environment:
+  # ball mass and radius are chosen to be roughly that of a ping pong ball
   ball_mass: 0.027
   ball_radius: 0.04
+  table_mass: 0.25
   table_height: 0.01
   table_radius: 0.4
   dt: 0.001
