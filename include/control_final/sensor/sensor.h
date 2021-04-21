@@ -6,7 +6,7 @@
 #include "raytracer/data_structures/object_vector.h"
 #include "raytracer/renderer.h"
 
-#include "yaml.h"
+#include "yaml-cpp/yaml.h"
 #include <Eigen/Dense>
 #include <Magick++.h>
 #include <memory>

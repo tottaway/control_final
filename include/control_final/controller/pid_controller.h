@@ -2,7 +2,7 @@
 #include "control_final/controller/controller.h"
 #include "control_final/sensor/sensor.h"
 
-#include "yaml.h"
+#include "yaml-cpp/yaml.h"
 
 namespace control_final {
 

@@ -4,7 +4,7 @@
 
 #include "raytracer/data_structures/object_vector.h"
 
-#include "yaml.h"
+#include "yaml-cpp/yaml.h"
 #include <Eigen/Dense>
 #include <algorithm>
 #include <iostream>

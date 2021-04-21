@@ -7,7 +7,7 @@
 #include "control_final/sensor/sensor.h"
 #include "control_final/util/parse_configs.h"
 
-#include "yaml.h"
+#include "yaml-cpp/yaml.h"
 #include <Eigen/Dense>
 #include <iostream>
 #include <map>
@@ -224,7 +224,7 @@ void Simulator::run() {
     m_controller->step(u, m_env.get_table_pose());
     m_env.step(u);
   }
-  m_observer_writer->release();
-  m_sensor_writer->release();
+  if (m_observer_writer) m_observer_writer->release();
+  if (m_sensor_writer) m_sensor_writer->release();
 }
 } // namespace control_final

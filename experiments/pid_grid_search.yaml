@@ -1,0 +1,119 @@
+experiment:
+  # grid search runs a simulation over the cartesian product of a bunch of
+  # different parameter values
+  type: grid_search
+  # log_dir is specified from project root
+  log_dir: log/pid_grid_search/
+
+  # I'm using spaces to denote multiple layers of indexing
+  parameters: [controller Kp, controller Kd, controller Ki]
+
+  # for key names I just replace spaces with underscores
+  # controller_Kp: [0.01, 0.03, 0.1, 0.3, 1]
+  # controller_Kd: [0.01, 0.03, 0.1, 0.3, 1]
+  # controller_Ki: [0.003, 0.01, 0.03, 0.1, 0.3]
+  controller_Kp: [0.1, 0.3]
+  controller_Kd: [0.08, 0.1]
+  controller_Ki: [0.01, 0.03]
+
+# this is the base config that will be used for running each of the simulations
+base_config:
+  sim:
+    # currently fps is a constant decided by the library I'm using
+    fps: 24
+
+    # output video (definitely don't want to make videos during an experiment)
+    make_observer_video: false
+
+    make_sensor_video: false
+
+    # specify fields of the initial table pose here, if not specified all fields
+    # will default to 0
+    init_table_pose:
+      # with how things currently are, this puts the top of the table at the origin
+      z: -0.01 
+      theta_x: 0.0
+
+    # specify fields of the initial table pose here, if not specified all fields
+    # will default to 0
+    init_ball_pose:
+      x: -0.1
+      y: 0.1
+      z: 0.04
+
+      aor: [0, 1, 1] # axis of rotation
+
+    # Total time in seconds
+    T: 6
+
+  controller:
+    controller_type: pid
+
+    # parameters for outer loop which controls ball location
+    # These are varied by the experiment
+    # Kp: 0.1
+    # Kd: 0.08
+    # Ki: 0.04
+
+    # parameters for the inner loop which controls the table positions
+    inner_Kp: 0.4
+    inner_Kd: 0.1
+
+    ref: [0, 0]
+
+    history_len: 2
+
+  environment:
+    # ball mass and radius are chosen to be roughly that of a ping pong ball
+    ball_mass: 0.027
+    ball_radius: 0.04
+    table_mass: 0.25
+    table_height: 0.01
+    table_radius: 0.4
+    dt: 0.001
+    mu: 0.6
+
+  sensor:
+    xres: 720
+    yres: 480
+
+    # looking from above
+    camera_pos: [0, 0, 2]
+    camera_dir: [0, 0, -1]
+
+  # contains information neccessary to render videos such as the positions of
+  # lights and the materials of the table and ball
+  render:
+    show_rotation_viz: false
+
+    materials:
+      - name: ball_material
+        kd: 0.7
+        ks: 0.1
+        specular_exponent: 4
+        diffuse_color: [0, 165, 255]
+        specular_color: [255, 255, 255]
+
+      - name: table_material
+        kd: 0.75
+        ks: 0.05
+        specular_exponent: 4
+        diffuse_color: [102, 102, 204]
+        specular_color: [255, 255, 255]
+
+      - name: rotation_viz_material
+        kd: 0.75
+        ks: 0.05
+        specular_exponent: 4
+        diffuse_color: [255, 0, 0]
+        specular_color: [255, 255, 255]
+    lights:
+      - type: directional
+        intensity: 1
+        color: [255, 255, 255]
+        dir: [1, 0, -3]
+
+      - type: directional
+        intensity: 1
+        color: [255, 255, 255]
+        dir: [-1, -1, -3]

@@ -4,7 +4,7 @@
 #include "raytracer/material.h"
 #include "raytracer/util.h"
 
-#include "yaml.h"
+#include "yaml-cpp/yaml.h"
 #include <iostream>
 #include <map>
 #include <memory>

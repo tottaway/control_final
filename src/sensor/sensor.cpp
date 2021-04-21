@@ -4,7 +4,7 @@
 
 #include "raytracer/renderer.h"
 
-#include "yaml.h"
+#include "yaml-cpp/yaml.h"
 #include <Eigen/Dense>
 #include <iostream>
 #include <memory>

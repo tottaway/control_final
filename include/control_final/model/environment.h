@@ -3,7 +3,7 @@
 
 #include "raytracer/data_structures/object_vector.h"
 
-#include "yaml.h"
+#include "yaml-cpp/yaml.h"
 #include <string>
 
 namespace control_final {

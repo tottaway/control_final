@@ -4,11 +4,9 @@ sim:
 
   # output video
   make_observer_video: true
-  # library adds .mp4 extension for you
   observer_video_filename: out.avi
 
   make_sensor_video: true
-  # library adds .mp4 extension for you
   sensor_video_filename: sensor_out.avi
 
   # specify fields of the initial table pose here, if not specified all fields

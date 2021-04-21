@@ -1,7 +1,7 @@
 #pragma once
 #include "control_final/sensor/sensor.h"
 
-#include "yaml.h"
+#include "yaml-cpp/yaml.h"
 #include <deque>
 
 namespace control_final {
