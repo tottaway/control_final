@@ -8,6 +8,7 @@
 #include <memory>
 #include <opencv2/opencv.hpp>
 #include <vector>
+#include <fstream>
 
 namespace control_final {
 
@@ -15,8 +16,6 @@ class Simulator {
 public:
   Simulator(const YAML::Node &node);
   void run();
-
-  State get_state() { return m_env.get_state(); };
 
 private:
   Sensor m_sensor;
@@ -38,6 +37,26 @@ private:
   std::unique_ptr<cv::VideoWriter> m_sensor_writer;
 
   void parse_sim_configs(const YAML::Node &node);
+
+  bool m_env_logging_enabled = false;
+  std::string m_env_log_filename;
+  std::ofstream m_env_log;
+
+  bool m_sensor_logging_enabled = false;
+  std::string m_sensor_log_filename;
+  std::ofstream m_sensor_log;
+
+  bool m_controller_logging_enabled = false;
+  std::string m_controller_log_filename;
+  std::ofstream m_controller_log;
+
+  void init_logs();
+  void close_logs();
+  void write_env_log(const double t);
+  void write_sensor_log(const double t);
+  void write_controller_log(const double t, const ControllerOutput &u);
 };
 
 } // namespace control_final
+
+

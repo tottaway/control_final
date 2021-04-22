@@ -2,19 +2,19 @@ experiment:
   # grid search runs a simulation over the cartesian product of a bunch of
   # different parameter values
   type: grid_search
-  # log_dir is specified from project root
-  log_dir: log/pid_grid_search/
+  # log_dir is specified from build dir for laziness
+  log_dir: ../logs/pid_grid_search/
 
   # I'm using spaces to denote multiple layers of indexing
   parameters: [controller Kp, controller Kd, controller Ki]
 
   # for key names I just replace spaces with underscores
-  # controller_Kp: [0.01, 0.03, 0.1, 0.3, 1]
-  # controller_Kd: [0.01, 0.03, 0.1, 0.3, 1]
-  # controller_Ki: [0.003, 0.01, 0.03, 0.1, 0.3]
-  controller_Kp: [0.1, 0.3]
-  controller_Kd: [0.08, 0.1]
-  controller_Ki: [0.01, 0.03]
+  controller_Kp: [0.08, 0.1, 0.15]
+  controller_Kd: [0.03, 0.05, 0.08]
+  controller_Ki: [0.003, 0.008]
+  # controller_Kp: [0.1, 0.3]
+  # controller_Kd: [0.08, 0.1]
+  # controller_Ki: [0.01, 0.03, 0.1, 0.3]
 
 # this is the base config that will be used for running each of the simulations
 base_config:
@@ -44,7 +44,7 @@ base_config:
       aor: [0, 1, 1] # axis of rotation
 
     # Total time in seconds
-    T: 6
+    T: 10
 
   controller:
     controller_type: pid

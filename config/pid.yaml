@@ -1,5 +1,4 @@
 sim:
-  # currently fps is a constant decided by the library I'm using
   fps: 24
 
   # output video
@@ -32,9 +31,9 @@ controller:
   controller_type: pid
 
   # parameters for outer loop which controls ball location
-  Kp: 0.1
-  Kd: 0.08
-  Ki: 0.04
+  Kp: 0.15
+  Kd: 0.05
+  Ki: 0.005
 
   # parameters for the inner loop which controls the table positions
   inner_Kp: 0.4

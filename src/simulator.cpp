@@ -17,9 +17,107 @@
 
 namespace control_final {
 
+void Simulator::init_logs() {
+  // open all of the enabled logs and write headers
+  if (m_env_logging_enabled) {
+    m_env_log.open(m_env_log_filename);
+    m_env_log << "t,ball_x,ball_y,ball_z,ball_xdot,ball_ydot,ball_zdot,"
+                 "ball_aor_x,ball_aor_y,ball_aor_z,ball_omega,table_x,"
+                 "table_y,table_z,table_xdot,table_ydot,table_zdot,table_theta_x,"
+                 "table_theta_y,table_theta_dot_x,table_theta_dot_y"
+              << std::endl;
+  }
+  if (m_sensor_logging_enabled) {
+    m_sensor_log.open(m_sensor_log_filename);
+    m_sensor_log << "t,ball_x,ball_y" << std::endl;
+  }
+  if (m_controller_logging_enabled) {
+    m_controller_log.open(m_controller_log_filename);
+    m_controller_log << "t,torque_x,torque_y,ref_theta_x,ref_theta_y"
+                     << std::endl;
+  }
+}
+
+void Simulator::close_logs() {
+  if (m_env_logging_enabled)
+    m_env_log.close();
+  if (m_sensor_logging_enabled)
+    m_sensor_log.close();
+  if (m_controller_logging_enabled)
+    m_controller_log.close();
+}
+
+void Simulator::write_env_log(const double t) {
+  if (!m_env_logging_enabled)
+    return;
+
+  m_env_log << t << ",";
+
+  const auto ball_pos = m_env.get_ball_pos();
+  m_env_log << ball_pos[0] << "," << ball_pos[1] << "," << ball_pos[2] << ",";
+
+  const auto ball_vel = m_env.get_ball_vel();
+  m_env_log << ball_vel[0] << "," << ball_vel[1] << "," << ball_vel[2] << ",";
+
+  const auto ball_aor = m_env.get_ball_aor();
+  m_env_log << ball_aor[0] << "," << ball_aor[1] << "," << ball_aor[2] << ",";
+
+  m_env_log << m_env.get_ball_omega() << ",";
+
+  const auto table_pos = m_env.get_table_pos();
+  m_env_log << table_pos[0] << "," << table_pos[1] << "," << table_pos[2] << ",";
+
+  const auto table_vel = m_env.get_table_vel();
+  m_env_log << table_vel[0] << "," << table_vel[1] << "," << table_vel[2] << ",";
+
+  const auto table_rot = m_env.get_table_rot();
+  m_env_log << table_rot[0] << "," << table_rot[1] << ",";
+
+  const auto table_rot_vel = m_env.get_table_rot_vel();
+  m_env_log << table_rot_vel[0] << "," << table_rot_vel[1];
+
+  m_env_log << std::endl;
+}
+
+void Simulator::write_sensor_log(const double t) {
+  if (!m_sensor_logging_enabled)
+    return;
+  m_sensor_log << t << ",";
+  m_sensor_log << m_controller->get_curr_x() << "," << m_controller->get_curr_y();
+  m_sensor_log << std::endl;
+}
+
+void Simulator::write_controller_log(const double t,
+                                     const ControllerOutput &u) {
+  if (!m_controller_logging_enabled)
+    return;
+  m_controller_log << t << ",";
+
+  m_controller_log << u.torque_x << "," << u.torque_y << ",";
+
+  m_controller_log << m_controller->get_ref_theta_x() << ","
+                   << m_controller->get_ref_theta_y();
+
+  m_controller_log << std::endl;
+}
+
 void Simulator::parse_sim_configs(const YAML::Node &node) {
   auto sim_node = node["sim"];
 
+  if (node["log_env"]) {
+    m_env_logging_enabled = true;
+    m_env_log_filename = node["log_env"].as<std::string>();
+  }
+
+  if (node["log_sensor"]) {
+    m_sensor_logging_enabled = true;
+    m_sensor_log_filename = node["log_sensor"].as<std::string>();
+  }
+
+  if (node["log_controller"]) {
+    m_controller_logging_enabled = true;
+    m_controller_log_filename = node["log_controller"].as<std::string>();
+  }
 
   // get fps of sensor and observer
   if (!sim_node["fps"]) {
@@ -191,6 +289,8 @@ Simulator::Simulator(const YAML::Node &node)
 }
 
 void Simulator::run() {
+  init_logs();
+
   std::vector<char> sensor_pixs(m_sensor.get_pixs_size());
   std::vector<char> observer_pixs;
   if (m_make_observer_video) {
@@ -202,11 +302,13 @@ void Simulator::run() {
   ControllerOutput u;
   m_sensor.observe(m_env, sensor_pixs);
   m_controller->react(sensor_pixs, m_sensor, 0);
+  double t = 0;
+  // TODO: get a progress bar for this
   for (unsigned i = 0; i < nsteps; i++) {
     if (i % (step_per_sec / m_fps) == 0) {
-      std::cout << "On frame: " << i / (step_per_sec / m_fps) << std::endl;
       m_sensor.observe(m_env, sensor_pixs);
-      m_controller->react(sensor_pixs, m_sensor, i * m_env.dt);
+      m_controller->react(sensor_pixs, m_sensor, t);
+      write_sensor_log(t);
 
       if (m_make_observer_video) {
         m_observer->observe(m_env, observer_pixs);
@@ -222,9 +324,19 @@ void Simulator::run() {
       }
     }
     m_controller->step(u, m_env.get_table_pose());
+
+    write_controller_log(t, u);
+    write_env_log(t);
+
     m_env.step(u);
+
+    t += m_env.dt;
   }
-  if (m_observer_writer) m_observer_writer->release();
-  if (m_sensor_writer) m_sensor_writer->release();
+  if (m_observer_writer)
+    m_observer_writer->release();
+  if (m_sensor_writer)
+    m_sensor_writer->release();
+
+  close_logs();
 }
 } // namespace control_final

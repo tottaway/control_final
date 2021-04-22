@@ -45,7 +45,7 @@ RenderingConfigs::RenderingConfigs(const YAML::Node &node) {
     materials[materials_node[i]["name"].as<std::string>()] = m;
   }
 
-  bool show_rotation_viz = false;
+  show_rotation_viz = false;
   if (render_node["show_rotation_viz"]) {
     YAML::convert<bool>::decode(render_node["show_rotation_viz"],
                                 show_rotation_viz);

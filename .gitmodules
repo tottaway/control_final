@@ -1,3 +1,6 @@
 [submodule "extern/raytracer"]
 	path = extern/raytracer
 	url = git@github.com:tottaway/raytracer.git
+[submodule "extern/kalman-cpp"]
+	path = extern/kalman-cpp
+	url = git@github.com:hmartiro/kalman-cpp.git

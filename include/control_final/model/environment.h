@@ -54,6 +54,18 @@ public:
     return res;
   };
 
+  Eigen::Vector2d get_table_rot() const {
+    Eigen::Vector2d res;
+    res << m_state.table_pose.theta_x, m_state.table_pose.theta_y;
+    return res;
+  };
+
+  Eigen::Vector2d get_table_rot_vel() const {
+    Eigen::Vector2d res;
+    res << m_state.table_pose.theta_dot_x, m_state.table_pose.theta_dot_y;
+    return res;
+  };
+
   Eigen::Vector3d get_ball_pos() const {
     Eigen::Vector3d res;
     res << m_state.ball_pose.x, m_state.ball_pose.y, m_state.ball_pose.z;
@@ -147,7 +159,7 @@ private:
   // moves the ball according to passed in velocity
   void apply_vel(const Eigen::Vector3d &vel);
 
-  // applies forces to table based on controller output 
+  // applies forces to table based on controller output
   void apply_controller_output(const ControllerOutput &u);
 };
 

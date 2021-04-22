@@ -21,8 +21,6 @@ PIDController::PIDController(const YAML::Node &node) : Controller(node) {
   m_ref_x = controller_node["ref"][0].as<double>();
   m_ref_y = controller_node["ref"][1].as<double>();
 
-  m_dt = 1 / node["sim"]["fps"].as<double>();
-
   m_ref_theta_x = 0;
   m_ref_theta_y = 0;
 
@@ -64,25 +62,4 @@ void PIDController::react(std::vector<char> &pixs, const Sensor &sensor,
   m_ref_theta_y = std::min(0.4, m_ref_theta_y);
 
 }
-
-void PIDController::step(ControllerOutput &u, TablePose table_pose) {
-
-  // get the current and previous states
-  const double curr_theta_x = table_pose.theta_x;
-  const double curr_theta_y = table_pose.theta_y;
-
-  const double curr_err_x = m_ref_theta_x - curr_theta_x;
-  const double curr_err_y = m_ref_theta_y - curr_theta_y;
-
-  const int curr_err_x_sign = (curr_err_x > 0) - (curr_err_x < 0);
-  const int curr_err_y_sign = (curr_err_y > 0) - (curr_err_y < 0);
-  const double d_err_x = -curr_err_x_sign * table_pose.theta_dot_x;
-  const double d_err_y = -curr_err_y_sign * table_pose.theta_dot_y;
-
-  // Note that rotating around the x axis affects the y coord of the ball
-  // TODO: implement windup
-  u.torque_x = m_inner_Kp * curr_err_x + m_inner_Kd * d_err_x;
-  u.torque_y = m_inner_Kp * curr_err_y + m_inner_Kd * d_err_y;
-}
-
 } // namespace control_final
