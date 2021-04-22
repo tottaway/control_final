@@ -85,8 +85,8 @@ class EnvLog(Log):
         settling_time_y = float('inf')
 
         settled = False
-        x_thresh_low = -0.01
-        x_thresh_high = 0.01
+        x_thresh_low = -0.015
+        x_thresh_high = 0.015
         for t, x in zip(self.t, self.ball_x):
             if x < x_thresh_low or x > x_thresh_high:
                 settled = False
@@ -97,8 +97,8 @@ class EnvLog(Log):
                 settled = True
 
         settled = False
-        y_thresh_low = -0.01
-        y_thresh_high = 0.01
+        y_thresh_low = -0.015
+        y_thresh_high = 0.015
         for t, y in zip(self.t, self.ball_y):
             if y < y_thresh_low or y > y_thresh_high:
                 settled = False

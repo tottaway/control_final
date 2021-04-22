@@ -3,15 +3,14 @@ experiment:
   # different parameter values
   type: grid_search
   # log_dir is specified from build dir for laziness
-  log_dir: ../logs/pid_grid_search/
+  log_dir: ../logs/inner_loop_search/
 
   # I'm using spaces to denote multiple layers of indexing
-  parameters: [controller Kp, controller Kd, controller Ki]
+  parameters: [controller inner_Kp, controller inner_Kd]
 
   # for key names I just replace spaces with underscores
-  controller_Kp: [0.01, 0.03, 0.1, 0.3, 1]
-  controller_Kd: [0.01, 0.03, 0.1, 0.3, 1]
-  controller_Ki: [0.001, 0.003, 0.01, 0.03]
+  controller_inner_Kp: [0.5, 0.8, 1, 1.5, 3]
+  controller_inner_Kd: [0.2, 0.3, 0.5, 0.8, 1]
   # controller_Kp: [0.1, 0.3]
   # controller_Kd: [0.08, 0.1]
   # controller_Ki: [0.01, 0.03, 0.1, 0.3]
@@ -44,24 +43,16 @@ base_config:
       aor: [0, 1, 1] # axis of rotation
 
     # Total time in seconds
-    T: 5
+    T: 10
 
   controller:
-    controller_type: pid
-
-    # parameters for outer loop which controls ball location
-    # These are varied by the experiment
-    # Kp: 0.1
-    # Kd: 0.08
-    # Ki: 0.04
-
-    # parameters for the inner loop which controls the table positions
-    inner_Kp: 3
-    inner_Kd: 0.5
-
-    ref: [0, 0]
+    controller_type: table_step
 
     history_len: 2
+
+    # parameters for the inner loop which controls the table positions
+    # inner_Kp: 0.4
+    # inner_Kd: 0.1
 
   environment:
     # ball mass and radius are chosen to be roughly that of a ping pong ball
@@ -74,8 +65,8 @@ base_config:
     mu: 0.6
 
   sensor:
-    xres: 720
-    yres: 480
+    xres: 16
+    yres: 9
 
     # looking from above
     camera_pos: [0, 0, 2]

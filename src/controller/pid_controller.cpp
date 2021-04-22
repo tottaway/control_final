@@ -9,14 +9,10 @@
 namespace control_final {
 PIDController::PIDController(const YAML::Node &node) : Controller(node) {
 
-  // TODO: make this better
   auto controller_node = node["controller"];
   m_Kp = controller_node["Kp"].as<double>();
   m_Kd = controller_node["Kd"].as<double>();
   m_Ki = controller_node["Ki"].as<double>();
-
-  m_inner_Kp = controller_node["inner_Kp"].as<double>();
-  m_inner_Kd = controller_node["inner_Kd"].as<double>();
 
   m_ref_x = controller_node["ref"][0].as<double>();
   m_ref_y = controller_node["ref"][1].as<double>();
@@ -37,8 +33,7 @@ void PIDController::react(std::vector<char> &pixs, const Sensor &sensor,
   const double curr_x = Controller::get_curr_x();
   const double curr_y = Controller::get_curr_y();
   const double prev_x = Controller::get_prev_x();
-  const double prev_y = Controller::get_prev_y();
-
+  const double prev_y = Controller::get_prev_y(); 
   const double curr_err_x = m_ref_x - curr_x;
   const double curr_err_y = m_ref_y - curr_y;
   const double prev_err_x = m_ref_x - prev_x;

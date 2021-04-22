@@ -4,6 +4,13 @@ import matplotlib.pyplot as plt
 from logs.env_log import EnvLog
 from tqdm import tqdm
 
+def calc_overshoot(env_log):
+    max_x = env_log.get_x_max()
+    min_y = env_log.get_y_min()
+
+    return max(abs(min_y), max_x)
+
+
 
 def pid_stats(log_dir):
     env_logs = []
@@ -21,7 +28,8 @@ def pid_stats(log_dir):
 
            if env_log.is_stable():
                settling_time = env_log.get_settling_time()
-               if settling_time < best_settling_time:
+               overshoot = calc_overshoot(env_log)
+               if overshoot < 0.5 and settling_time < best_settling_time:
                    best_settling_time = settling_time
                    best_file = filename
                    best_env_log = env_log

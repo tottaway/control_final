@@ -13,6 +13,6 @@ class Log():
                         .format(plot, type(plot)))
                 continue
             
-            plt.plot(self.t, getattr(self, plot))
+            plt.plot(self.t, getattr(self, plot), label=plot)
             if show:
                 plt.show()

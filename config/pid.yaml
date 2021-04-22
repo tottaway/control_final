@@ -1,3 +1,6 @@
+# log_env: env_log.csv
+# log_sensor: sensor_log.csv
+# log_controller: controller_log.csv
 sim:
   fps: 24
 
@@ -19,7 +22,7 @@ sim:
   # will default to 0
   init_ball_pose:
     x: -0.1
-    y: 0.1
+    y: -0.1
     z: 0.04
 
     aor: [0, 1, 1] # axis of rotation
@@ -31,13 +34,13 @@ controller:
   controller_type: pid
 
   # parameters for outer loop which controls ball location
-  Kp: 0.15
-  Kd: 0.05
-  Ki: 0.005
+  Kp: 0.4
+  Kd: 0.32
+  Ki: 0.001
 
   # parameters for the inner loop which controls the table positions
-  inner_Kp: 0.4
-  inner_Kd: 0.1
+  inner_Kp: 3
+  inner_Kd: 0.5
 
   ref: [0, 0]
 
@@ -65,15 +68,15 @@ sensor:
   camera_dir: [0, 0, -1]
 
 observer:
-  camera_pos: [-2, 0, 0.4]
-  camera_dir: [1, 0, -0.1]
+  camera_pos: [-2, 0, 0.6]
+  camera_dir: [1, 0, -0.2]
 
   # resolution
-  xres: 480
-  yres: 240
+  # xres: 720
+  # yres: 480
   # higher resolution
-  # xres: 1920
-  # yres: 1080
+  xres: 1920
+  yres: 1080
 
 # contains information neccessary to render videos such as the positions of
 # lights and the materials of the table and ball
@@ -103,11 +106,11 @@ render:
       specular_color: [255, 255, 255]
   lights:
     - type: directional
-      intensity: 1
+      intensity: 2
       color: [255, 255, 255]
-      dir: [1, 0, -3]
+      dir: [0, 0, -3]
 
     - type: directional
-      intensity: 1
+      intensity: 0.5
       color: [255, 255, 255]
-      dir: [-1, -1, -3]
+      dir: [-1, -1.5, -2]

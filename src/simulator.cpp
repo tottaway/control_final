@@ -1,6 +1,7 @@
 #include "control_final/simulator.h"
 #include "control_final/controller/controller.h"
 #include "control_final/controller/pid_controller.h"
+#include "control_final/controller/table_step.h"
 #include "control_final/model/environment.h"
 #include "control_final/model/render_config.h"
 #include "control_final/model/state.h"
@@ -280,6 +281,8 @@ Simulator::Simulator(const YAML::Node &node)
 
   if (controller_type == "pid") {
     m_controller = std::make_unique<PIDController>(node);
+  } else if (controller_type == "table_step") {
+    m_controller = std::make_unique<TableStepController>(node);
   } else {
     std::cout << "Invalid controller type " << controller_type << std::endl;
     exit(1);

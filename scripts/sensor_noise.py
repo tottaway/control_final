@@ -35,7 +35,8 @@ def calculate_sensor_noise(log_dir, filenames=[]):
             if not os.path.isfile(path):
                 raise Exception("There should always be a matching env file")
             env_log = EnvLog(env_path)
-            covs.append(calculate_sensor_noise_helper(sensor_log, env_log))
+            if env_log.is_stable():
+                covs.append(calculate_sensor_noise_helper(sensor_log, env_log))
 
     average_cov = sum(covs) / len(covs)
 

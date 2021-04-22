@@ -12,7 +12,7 @@ set(SOURCES ./src/main.cpp ./src/sensor/sensor.cpp ./src/model/state.cpp
             ./src/model/environment.cpp ./src/controller/controller.cpp
             ./src/controller/pid_controller.cpp ./src/model/render_config.cpp
             ./src/simulator.cpp ./src/experiment.cpp
-            ./extern/kalman-cpp/kalman.cpp)
+            ./src/controller/table_step.cpp ./extern/kalman-cpp/kalman.cpp)
 
 include_directories(./include ./extern/kalman-cpp)
 

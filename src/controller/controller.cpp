@@ -19,6 +19,9 @@ Controller::Controller(const YAML::Node &node) {
   auto controller_node = node["controller"];
   m_history_len = controller_node["history_len"].as<unsigned>();
 
+  m_inner_Kp = controller_node["inner_Kp"].as<double>();
+  m_inner_Kd = controller_node["inner_Kd"].as<double>();
+
   m_dt = 1 / node["sim"]["fps"].as<double>();
 
   const Eigen::Vector4d zeros{0, 0, 0, 0};
@@ -40,15 +43,12 @@ Controller::Controller(const YAML::Node &node) {
 
   // Not sure how to populate this one?
   Eigen::Matrix4d Q;
-  Q << 1e-6, 0, 0, 0, 0, 1e-6, 0, 0, 0, 0, 1e-6, 0, 0, 0, 0, 1e-6;
+  Q << 5e-6, 0, 0, 0, 0, 5e-6, 0, 0, 0, 0, 5e-6, 0, 0, 0, 0, 5e-6;
 
   // TODO: check this experimentally
   Eigen::Matrix4d R;
-  R <<
-    1.15e-4, 1.1e-5, 0, 0,
-    1.09e-5, 8.1e-05, 0, 0,
-    0, 0, 0.01, 0,
-    0, 0, 0, 0.01;
+  R << 1.15e-4, 1.1e-5, 0, 0, 1.09e-5, 8.1e-05, 0, 0, 0, 0, 0.01, 0, 0, 0, 0,
+      0.01;
 
   // TODO: apparently this will converge and I can use that
   Eigen::Matrix4d P;
@@ -100,6 +100,7 @@ void Controller::predict_state(std::vector<char> &pixs, const Sensor &sensor) {
   Canny(detected_edges, detected_edges, 0, 100, kernel_size);
   /* cv::imshow("detected edges", detected_edges); */
   /* cv::waitKey(); */
+  /* exit(1); */
 
   // find circles
   // source: https://docs.opencv.org/3.4/d4/d70/tutorial_hough_circle.html
@@ -122,6 +123,15 @@ void Controller::predict_state(std::vector<char> &pixs, const Sensor &sensor) {
   State ret;
   if (ncircles == 1) {
     Vec3i c = circles[0];
+
+    // Uncomment to generate images
+    /* circle(im, Point(c[0], c[1]), 1, Scalar(0, 100, 100), 3, LINE_AA); */
+    /* // circle outline */
+    /* int radius = c[2]; */
+    /* circle(im, Point(c[0], c[1]), radius, Scalar(255, 0, 255), 3, LINE_AA); */
+    /* cv::imshow("detected circles", im); */
+    /* cv::waitKey(); */
+    /* exit(1); */
 
     // We assume that the ball is on the table and that the camera is pointing
     // straight down
